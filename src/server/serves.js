@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 
-export const BASE_API_URL = 'http://agazatyapi.runasp.net';
+// تعديل السطر ده ليستخدم المتغير البيئي REACT_APP_BASE_API_URL من Vercel أو localhost كخيار احتياطي
+export const BASE_API_URL = process.env.REACT_APP_BASE_API_URL || 'http://agazatyapi.runasp.net'; 
+
 export const roleName = localStorage.getItem("roleName");
 export const token = localStorage.getItem("token");
 export const userID = localStorage.getItem("userID");
@@ -11,45 +13,36 @@ export function useUserData() {
 
     useEffect(() => {
         if (userID) {
-        fetch(`${BASE_API_URL}/api/Account/GetUserById/${userID}`)
-            .then((res) => res.json())
-            .then((data) => setUserData(data))
-            .catch((err) => console.error('Error fetching user:', err));
+            fetch(`${BASE_API_URL}/api/Account/GetUserById/${userID}`)
+                .then((res) => res.json())
+                .then((data) => setUserData(data))
+                .catch((err) => console.error('Error fetching user:', err));
         }
     }, [userID]);
 
     return userData;
-    }
+}
 
+export async function downloadActiveUsersExcel() {
+    try {
+        const response = await fetch(`${BASE_API_URL}/api/Account/export-active-users-excel`, {
+            method: 'GET',
+        });
 
-
-
-
-
-
-
-
-    export async function downloadActiveUsersExcel() {
-        try {
-            const response = await fetch(`${BASE_API_URL}/api/Account/export-active-users-excel`, {
-                method: 'GET',
-            });
-    
-            if (!response.ok) {
-                throw new Error('Download failed');
-            }
-    
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'active-users.xlsx';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Error downloading the Excel file:', error);
+        if (!response.ok) {
+            throw new Error('Download failed');
         }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'active-users.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error downloading the Excel file:', error);
     }
-    
+}
