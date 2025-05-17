@@ -4,7 +4,7 @@ import '../CSS/LinkSideBar.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHouse, faUser, faCalendarPlus, faHandshake, faUsersRectangle, faUsers, faFolderOpen, faCalendarDays, faCircleQuestion, faGear, faScroll, faCircleExclamation, faCircleH, faHouseMedicalCircleCheck, faRightFromBracket, faCalendarDay } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState, useRef } from "react";
-import { BASE_API_URL, roleName, useUserData } from "../server/serves";
+import { BASE_API_URL, roleName, token, useUserData } from "../server/serves";
 
 function SideBar() {
     const location = useLocation();
@@ -20,25 +20,62 @@ function SideBar() {
     const userData = useUserData();
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByCoWorkerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => setLeavesWating(data));
+        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByCoWorkerID/${userID}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        })
+        .then((res) => res.json())
+        .then((data) => setLeavesWating(data))
+        .catch((err) => console.error("Error fetching waiting leaves by co-worker:", err));
 
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByDirect_ManagerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => setLeavesWatingForDirect(data));
+        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByDirect_ManagerID/${userID}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        })
+        .then((res) => res.json())
+        .then((data) => setLeavesWatingForDirect(data))
+        .catch((err) => console.error("Error fetching waiting leaves by direct manager:", err));
 
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByGeneral_ManagerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => setLeavesWatingForGeneral(data));
+        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByGeneral_ManagerID/${userID}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        })
+        .then((res) => res.json())
+        .then((data) => setLeavesWatingForGeneral(data))
+        .catch((err) => console.error("Error fetching waiting leaves by general manager:", err));
 
-        fetch(`${BASE_API_URL}/api/SickLeave/GetAllWaitingSickLeaves`)
-            .then((res) => res.json())
-            .then((data) => setWaitingSickLeaves(data));
 
-        fetch(`${BASE_API_URL}/api/SickLeave/GetAllWaitingCertifiedSickLeaves`)
-            .then((res) => res.json())
-            .then((data) => setWaitingCertifiedSickLeaves(data));
+        fetch(`${BASE_API_URL}/api/SickLeave/GetAllWaitingSickLeaves`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // إضافة التوكن هنا
+        },
+        })
+        .then((res) => res.json())
+        .then((data) => setWaitingSickLeaves(data))
+        .catch((error) => console.error("Error fetching waiting sick leaves:", error));
+
+        fetch(`${BASE_API_URL}/api/SickLeave/GetAllWaitingCertifiedSickLeaves`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // إضافة التوكن هنا
+        },
+        })
+        .then((res) => res.json())
+        .then((data) => setWaitingCertifiedSickLeaves(data))
+        .catch((error) => console.error("Error fetching waiting certified sick leaves:", error));
+
     }, [userID]);
 
     const toggleDropdown = (name) => {
@@ -98,7 +135,7 @@ function SideBar() {
     return (
         <div className="pt-3 SideBar" ref={sidebarRef}>
             <div>
-                <Link to={'/about'} className="Agazaty d-flex text-center text-primary" title="معلومات عن النظام">اجازاتي</Link>
+                <Link to={'/team'} className="Agazaty d-flex text-center text-primary" title="معلومات عن النظام">اجازاتي</Link>
             </div>
             <div>
                 <ul className="list-unstyled p-0 pt-2">
@@ -136,15 +173,11 @@ function SideBar() {
                                     {renderSubLink('اعتيادية', '/agazaty/normal', 'أمين الكلية, مدير الموارد البشرية, هيئة تدريس, موظف')}
                                     {renderSubLink('عارضة', '/agazaty/casual', 'أمين الكلية, مدير الموارد البشرية, هيئة تدريس, موظف')}
                                     {renderSubLink('مرضية', '/agazaty/sick', 'أمين الكلية, مدير الموارد البشرية, هيئة تدريس, موظف')}
+                                    {renderSubLink('تصاريح', '/agazaty/permit', 'أمين الكلية, مدير الموارد البشرية, هيئة تدريس, موظف')}
                                 </ul>
                             )}
                         </Link>
                     }
-
-
-
-
-
 
 
                     {renderLink('الأقسام', faUsersRectangle, '/departments', 'أمين الكلية, عميد الكلية, مدير الموارد البشرية')}
@@ -161,7 +194,7 @@ function SideBar() {
                                 <ul className="list-unstyled pl-4 d-none d-xxl-block">
                                     {renderSubLink('الموظفين النشطين', '/employees/active', 'أمين الكلية, عميد الكلية, مدير الموارد البشرية')}
                                     {renderSubLink('الموظفين غير النشطين', '/employees/inactive', 'أمين الكلية, عميد الكلية, مدير الموارد البشرية')}
-                                    {renderSubLink('رفع موظف', '/test', 'مدير الموارد البشرية')}
+                                    {renderSubLink('رفع موظف', '/UploadUsersExcel', 'مدير الموارد البشرية')}
                                 </ul>
                             )}
                         </Link>
@@ -186,11 +219,11 @@ function SideBar() {
                     }
 
 
-                    {userData.isDirectManager && renderLink('طلبات الاجازات', faFolderOpen, '/leave-record', 'هيئة تدريس', '', true, leavesWatingForDirect.length)}
-                    {renderLink('طلبات الاجازات', faFolderOpen, '/general/leave-record', 'أمين الكلية, عميد الكلية', '', true, leavesWatingForGeneral.length)}
+                    {userData.isDirectManager && renderLink('طلبات الاجازات', faFolderOpen, '/leave-record', 'هيئة تدريس, مدير الموارد البشرية, موظف', '', true, leavesWatingForDirect.length)}
+                    {renderLink('طلبات الاجازات', faFolderOpen, '/leave-record', 'أمين الكلية ,عميد الكلية', '', true, leavesWatingForGeneral.length)}
+                    {renderLink('إضافة تصريح', faScroll, '/permit', 'مدير الموارد البشرية')}
                     {renderLink('الاستفسارات', faCircleQuestion, '/inquiries', 'أمين الكلية, عميد الكلية, مدير الموارد البشرية, هيئة تدريس, موظف')}
                     {renderLink('الاعدادات', faGear, '/sitting', 'أمين الكلية, عميد الكلية, مدير الموارد البشرية, هيئة تدریس, موظف')}
-                    {renderLink('إضافة تصريح', faScroll, '/permit', 'مدير الموارد البشرية')}
                     {renderLink('معلومات عامة', faCircleExclamation, '/about', 'أمين الكلية, عميد الكلية, مدير الموارد البشرية, هيئة تدريس, موظف')}
                     {renderLink('سجل الاجازات المرضية', faCircleH, '/sick-leaves-record', 'مدير الموارد البشرية')}
                     {renderLink('تحديث الاجازة المرضية', faHouseMedicalCircleCheck, '/sick-leaves-record2', 'مدير الموارد البشرية', '', true, waitingSickLeaves.length + waitingCertifiedSickLeaves.length)}

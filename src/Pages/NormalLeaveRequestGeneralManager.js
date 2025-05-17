@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import BtnLink from '../components/BtnLink';
 import Btn from '../components/Btn';
 import Swal from 'sweetalert2';
-import { BASE_API_URL } from '../server/serves';
+import { BASE_API_URL, token } from '../server/serves';
 
 function NormalLeaveRequestManager() {
     const LeaveID = useParams().id;
@@ -12,17 +12,41 @@ function NormalLeaveRequestManager() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/GetNormalLeaveById/${LeaveID}`)
-            .then((res) => res.json())
-            .then((data) => {
+        fetch(`${BASE_API_URL}/api/NormalLeave/GetNormalLeaveById/${LeaveID}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(async (res) => {
+                if (res.status === 403) {
+                    window.location.href = "/error403";
+                    return;
+                }
+                
+                if (res.status === 404) {
+                    window.location.href = "/error404";
+                    return;
+                }
+
+                const data = await res.json();
                 setLeave(data);
             })
             .catch((err) => console.error("Error fetching leave data:", err));
     }, [LeaveID]);
 
+
+
     useEffect(() => {
         if (leave && leave.userID) {
-            fetch(`${BASE_API_URL}/api/Account/GetUserById/${leave.userID}`)
+            fetch(`${BASE_API_URL}/api/Account/GetUserById/${leave.userID}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    })
                 .then((res) => res.json())
                 .then((data) => {
                     setUser(data);
@@ -41,22 +65,38 @@ function NormalLeaveRequestManager() {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify(body)
         })
             .then(async (res) => {
+                if (res.status === 403) {
+                    window.location.href = "/error403";
+                    return;
+                }
+
+                if (res.status === 404) {
+                    window.location.href = "/error404";
+                    return;
+                }
+
                 const data = await res.json();
     
                 if (!res.ok) {
-                    // ❌ لو فيه رسالة من الباك نعرضها
                     throw new Error(data.message || "فشل في تحديث القرار");
                 }
+
     
                 // ✅ لو العملية نجحت
                 Swal.fire({
                     icon: 'success',
                     title: isApproved ? 'تمت الموافقة بنجاح' : 'تم الرفض بنجاح',
-                    confirmButtonText: 'حسنًا'
+                    confirmButtonText: 'حسنًا',
+                    customClass: {
+                        title: 'text-blue',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
                 }).then(() => {
                     // ✅ التوجيه فقط بدون إعادة تحميل
                     window.location.href = "/general/leave-record";
@@ -68,7 +108,16 @@ function NormalLeaveRequestManager() {
                     icon: 'error',
                     title: 'حدث خطأ!',
                     text: err.message || 'حدثت مشكلة أثناء إرسال القرار.',
-                    confirmButtonText: 'حسنًا'
+                    confirmButtonText: 'حسنًا',
+                    customClass: {
+                        title: 'text-blue',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
                 });
             });
     };
@@ -153,7 +202,16 @@ function NormalLeaveRequestManager() {
                                                 icon: 'question',
                                                 showCancelButton: true,
                                                 confirmButtonText: 'نعم، موافق',
-                                                cancelButtonText: 'إلغاء'
+                                                cancelButtonText: 'إلغاء',
+                                                customClass: {
+                                                    title: 'text-blue',
+                                                    confirmButton: 'blue-button',
+                                                    cancelButton: 'red-button'
+                                                },
+                                                didOpen: () => {
+                                                    const popup = document.querySelector('.swal2-popup');
+                                                    if (popup) popup.setAttribute('dir', 'rtl');
+                                                }
                                             }).then((result) => {
                                                 if (result.isConfirmed) {
                                                     updateDecision(leave.id, true);
@@ -168,16 +226,25 @@ function NormalLeaveRequestManager() {
                                         className='btn btn-danger w-25'
                                         onClick={async () => {
                                             const { value: reason } = await Swal.fire({
-                                                title: 'رفض الطلب',
+                                                title: 'رفض الطلب!',
                                                 input: 'textarea',
-                                                inputLabel: 'سبب الرفض',
+                                                inputLabel: 'سبب الرفض!',
                                                 inputPlaceholder: 'اكتب سبب الرفض هنا...',
                                                 inputAttributes: {
                                                     'aria-label': 'اكتب سبب الرفض هنا'
                                                 },
                                                 showCancelButton: true,
                                                 confirmButtonText: 'رفض',
-                                                cancelButtonText: 'إلغاء'
+                                                cancelButtonText: 'إلغاء',
+                                                customClass: {
+                                                    title: 'text-red',
+                                                    confirmButton: 'blue-button',
+                                                    cancelButton: 'red-button'
+                                                },
+                                                didOpen: () => {
+                                                    const popup = document.querySelector('.swal2-popup');
+                                                    if (popup) popup.setAttribute('dir', 'rtl');
+                                                },
                                             });
 
                                             if (reason) {

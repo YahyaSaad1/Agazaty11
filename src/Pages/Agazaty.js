@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import BtnLink from "../components/BtnLink";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPrint } from "@fortawesome/free-solid-svg-icons";
-import API from "../Data" ;
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function Agazaty(){
     const userID = localStorage.getItem("userID");
@@ -18,23 +17,53 @@ function Agazaty(){
     const [rejectedLeaves, setRejectedLeaves] = useState([]);
     const [waitingLeaves, setWaitingLeaves] = useState([]);
 
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/CasualLeave/GetAllCasualLeavesByUserId/${userID}`)
-        .then((res)=> res.json())
-        .then((data)=> setCasualLeaves(data))
-    }, [userID])
+    useEffect(() => {
+    fetch(`${BASE_API_URL}/api/CasualLeave/GetAllCasualLeavesByUserId/${userID}`, {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // إضافة التوكن في الهيدر
+        },
+    })
+        .then((res) => res.json())
+        .then((data) => setCasualLeaves(Array.isArray(data) ? data : []))
+        .catch((err) => console.error("Error fetching data:", err));
+    }, [userID]);
+
+    useEffect(() => {
+        const fetchSickLeaves = async () => {
+            try {
+            const response = await fetch(`${BASE_API_URL}/api/SickLeave/GetAllSickLeavesByUserID/${userID}`, {
+                method: "GET",
+                headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+                },
+            });
+        
+            const data = await response.json();
+            setSickLeaves(Array.isArray(data) ? data : []);
+            } catch (error) {
+            console.error("Error fetching sick leaves:", error);
+            }
+        };
+        
+        fetchSickLeaves();
+    }, [userID, token]);
     
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/SickLeave/GetAllSickLeavesByUserID/${userID}`)
-        .then((res)=> res.json())
-        .then((data)=> setSickLeaves(data))
-    }, [userID])
-    
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/NormalLeave/GetLeaveTypes`)
-        .then((res)=> res.json())
-        .then((data)=> setLeaveTypes(data))
-    }, [userID])
+    useEffect(() => {
+    fetch(`${BASE_API_URL}/api/NormalLeave/GetLeaveTypes`, {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // إضافة التوكن في الهيدر
+        },
+    })
+        .then((res) => res.json())
+        .then((data) => setLeaveTypes(data))
+        .catch((err) => console.error("Error fetching leave types:", err)); // معالجة الأخطاء
+    }, [userID]);
+
     
     
     const [filteredLeaves, setFilteredLeaves] = useState([]);
@@ -55,35 +84,61 @@ function Agazaty(){
     }, [leaveHolder, NormalLeaves, waitingLeaves, acceptedLeaves, rejectedLeaves]);
 
 
-        // كل الاجازات الاعتيادية للموظف
-        useEffect(()=>{
-            fetch(`${BASE_API_URL}/api/NormalLeave/AllNormalLeavesByUserId/${userID}`) 
-            .then((res)=> res.json())
-            .then((data)=> setNormalLeaves(data))
-        }, [])
-        
+    // كل الاجازات الاعتيادية للموظف
+    useEffect(() => {
+        fetch(`${BASE_API_URL}/api/NormalLeave/AllNormalLeavesByUserId/${userID}`, {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => setNormalLeaves(data))
+            .catch((err) => console.error("Error fetching all normal leaves:", err));
+        }, [userID]);
 
+        // المقبولة
+        useEffect(() => {
+        fetch(`${BASE_API_URL}/api/NormalLeave/AcceptedByUserId/${userID}`, {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => setAcceptedLeaves(data))
+            .catch((err) => console.error("Error fetching accepted leaves:", err));
+        }, [userID]);
 
-    // المقبولة
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/NormalLeave/AcceptedByUserId/${userID}`)
-        .then((res)=> res.json())
-        .then((data)=> setAcceptedLeaves(data))
-    }, [userID])
-
-    // المرفوضة
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/NormalLeave/RejectedByUserId/${userID}`)
-        .then((res)=> res.json())
-        .then((data)=> setRejectedLeaves(data))
-    }, [userID])
+        // المرفوضة
+        useEffect(() => {
+        fetch(`${BASE_API_URL}/api/NormalLeave/RejectedByUserId/${userID}`, {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => setRejectedLeaves(data))
+            .catch((err) => console.error("Error fetching rejected leaves:", err));
+        }, [userID]);
 
     // المعلقة
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByUserId/${userID}`)
-        .then((res)=> res.json())
-        .then((data)=> setWaitingLeaves(data))
-    }, [userID])
+    useEffect(() => {
+    fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByUserId/${userID}`, {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        },
+    })
+        .then((res) => res.json())
+        .then((data) => setWaitingLeaves(data))
+        .catch((err) => console.error("Error fetching waiting leaves:", err));
+    }, [userID]);
 
 
 
@@ -129,9 +184,10 @@ function Agazaty(){
                             {filteredLeaves.map((leave, index) => (
                                 <tr key={index}>
                                     <th>اعتيادية</th>
-                                    <th>{new Date(leave.startDate).toLocaleDateString()}</th>
-                                    <th>{new Date(leave.endDate).toLocaleDateString()}</th>
-                                    <th>{leave.days} أيام</th>
+                                    <th>{new Date(leave.startDate).toLocaleDateString('ar-EG')}</th>
+                                    <th>{new Date(leave.endDate).toLocaleDateString('ar-EG')}</th>
+                                                        <th>{leave.days.toString().replace(/[0-9]/g, (digit) => '٠١٢٣٤٥٦٧٨٩'[digit])} أيام</th>
+
                                     <th>{leave.coworkerName}</th>
                                     <th>{leave.notesFromEmployee}</th>
                                     <th>{leave.leaveStatus === 0 ? "معلقة" : leave.leaveStatus === 1 ? "مقبولة" : "مرفوضة"}</th>
@@ -166,9 +222,10 @@ function Agazaty(){
                                         {CasualLeaves.map((leave, index) => (
                                             <tr key={index}>
                                                 <th>عارضة</th>
-                                                <th>{new Date(leave.startDate).toLocaleDateString()}</th>
-                                                <th>{new Date(leave.endDate).toLocaleDateString()}</th>
-                                                <th>{leave.days} أيام</th>
+                                                <th>{new Date(leave.startDate).toLocaleDateString('ar-EG')}</th>
+                                                <th>{new Date(leave.endDate).toLocaleDateString('ar-EG')}</th>
+                                                                    <th>{leave.days.toString().replace(/[0-9]/g, (digit) => '٠١٢٣٤٥٦٧٨٩'[digit])} أيام</th>
+
                                                 <th>{leave.notes}</th>
                                                 <th>
                                                     <FontAwesomeIcon icon={faPrint} fontSize={'26px'} color="blue" className="printer" />
@@ -201,8 +258,8 @@ function Agazaty(){
                                         {SickLeaves.map((leave, index) => (
                                             <tr key={index}>
                                                 <th>مرضية</th>
-                                                <th>{new Date(leave.startDate).toLocaleDateString()}</th>
-                                                <th>{new Date(leave.endDate).toLocaleDateString()}</th>
+                                                <th>{new Date(leave.startDate).toLocaleDateString('ar-EG')}</th>
+                                                <th>{new Date(leave.endDate).toLocaleDateString('ar-EG')}</th>
                                                 <th> {leave.days} أيام</th>
                                                 {leave.respononseDone === true ? <th>مقبولة</th>
                                                 : leave.respononseDone === false ? <th>مرفوضة</th>
@@ -221,10 +278,8 @@ function Agazaty(){
                             ) : <table><tbody><tr>
                                     <td colSpan="5" className="text-center text-danger p-3">لا يوجد اجازات مرضية</td>
                                 </tr></tbody></table>)
-                                
                             : null
                     }
-        
             </div>
         </div>
     )

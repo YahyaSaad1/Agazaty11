@@ -2,7 +2,7 @@ import { useState } from 'react';
 import '../CSS/login.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import {BASE_API_URL} from '../server/serves';
+import {BASE_API_URL, token} from '../server/serves';
 
 function OTPCode() {
     const [otp, setOtp] = useState(['', '', '', '', '', '']); // Array to hold 6 OTP digits
@@ -54,7 +54,8 @@ function OTPCode() {
                 {
                     headers: {
                         'accept': '*/*',
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
                     }
                 }
             );
@@ -75,17 +76,17 @@ function OTPCode() {
     return (
         <form onSubmit={handleSubmit}>
             <div className='wordLogin'>
-                <h4 className="text-center text-head">لقد أرسلنا كود التحقق</h4>
+                <h4 className="text-center text-head text-bold">لقد أرسلنا كود التحقق</h4>
             </div>
 
             {error && (
-                <div className="alert alert-danger" role="alert">
+                <div className="alert alert-danger p-2" role="alert">
                     {error}
                 </div>
             )}
 
             <div className="mb-3">
-                <label htmlFor="otp-input-0" className="form-label">كود التحقق</label>
+                <label htmlFor="otp-input-0" className="form-label text-600">كود التحقق</label>
                 <div className="otp-container " style={{ "direction": 'ltr' }}>
                     {otp.map((digit, index) => (
                         <input

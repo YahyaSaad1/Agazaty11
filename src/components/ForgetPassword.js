@@ -2,7 +2,7 @@ import { useState } from 'react';
 import '../CSS/login.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import {BASE_API_URL} from '../server/serves';
+import {BASE_API_URL, token} from '../server/serves';
 
 function ForgetPassword() {
     const [email, setEmail] = useState('');
@@ -24,7 +24,8 @@ function ForgetPassword() {
                 {
                     headers: {
                         'accept': '*/*',
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
                     }
                 }
             );
@@ -46,17 +47,17 @@ function ForgetPassword() {
     return (
         <form onSubmit={handlePassword}>
             <div className='wordLogin'>
-                <h4 className="text-center text-head">استرجاع كلمة المرور</h4>
+                <h4 className="text-center text-head text-bold">استرجاع كلمة المرور</h4>
             </div>
 
             {error && (
-                <div className="alert alert-danger" role="alert">
+                <div className="alert alert-danger p-2" role="alert">
                     {error}
                 </div>
             )}
 
             <div className="mb-3">
-                <label htmlFor="exampleInputEmail1" className="form-label">البريد الإلكتروني</label>
+                <label htmlFor="exampleInputEmail1" className="form-label text-600">البريد الإلكتروني</label>
                 <input
                     type="email"
                     value={email}

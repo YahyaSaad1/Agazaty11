@@ -1,45 +1,165 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import BtnLink from '../components/BtnLink';
 import Import from '../Images/import.png';
 import Export from '../Images/export.png';
 import Equal from '../Images/equal.png';
 import Btn from '../components/Btn';
 import vide from '../Images/vide.xlsx';
-import { downloadActiveUsersExcel } from '../server/serves';
+import { BASE_API_URL, downloadActiveUsersExcel, token } from '../server/serves';
+import * as XLSX from 'xlsx';
 
 const UploadUsersExcel = () => {
     const [file, setFile] = useState(null);
     const [message, setMessage] = useState('');
-    const [selectedOption, setSelectedOption] = useState('new');
+    const [isUploading, setIsUploading] = useState(false); // حالة جديدة لتتبع عملية التحميل
 
     const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
+        const selectedFile = e.target.files[0];
+        setFile(selectedFile);
+        
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const data = e.target.result;
+            const workbook = XLSX.read(data, { type: 'binary' });
+
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const sheetData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            if (sheetData.length === 0 || sheetData[0].length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'الملف فارغ',
+                    text: 'الملف الذي قمت برفعه فارغ. من فضلك تحقق من البيانات.',
+                    confirmButtonText: 'موافق',
+                    customClass: {
+                        title: 'text-blue',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
+                });
+                setFile(null);
+            }
+        };
+        reader.readAsBinaryString(selectedFile);
     };
 
     const handleUpload = async () => {
         if (!file) {
-        setMessage("من فضلك اختر ملف Excel أولاً.");
-        return;
+            Swal.fire({
+                icon: 'warning',
+                title: 'لم يتم رفع الملف',
+                text: 'من فضلك اختر ملف Excel أولاً.',
+                confirmButtonText: 'موافق',
+                customClass: {
+                    title: 'text-blue',
+                    confirmButton: 'blue-button',
+                    cancelButton: 'red-button'
+                },
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
+            return;
         }
 
-    const formData = new FormData();
-    formData.append("file", file);
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        if (!['xlsx', 'xls'].includes(fileExtension)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'صيغة الملف غير مدعومة',
+                text: 'من فضلك قم برفع ملف بصيغة Excel فقط (.xlsx أو .xls).',
+                confirmButtonText: 'موافق',
+                customClass: {
+                    title: 'text-red',
+                    confirmButton: 'blue-button',
+                    cancelButton: 'red-button'
+                },
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
+            return;
+        }
 
-    try {
-      const response = await axios.post("/api/Account/upload-users-excel", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-      setMessage("تم رفع الملف بنجاح ✅");
-      console.log(response.data);
-    } catch (error) {
-        setMessage("حدث خطأ أثناء رفع الملف ❌");
-        console.error(error);
-        }
+        Swal.fire({
+            icon: 'question',
+            title: 'تأكيد',
+            text: 'هل أنت متأكد من أنك تريد رفع الملف؟',
+            showCancelButton: true,
+            confirmButtonText: 'نعم، ارفع الملف',
+            cancelButtonText: 'إلغاء',
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                setIsUploading(true); // تم تفعيل عملية التحميل
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await axios.post(`${BASE_API_URL}/api/Account/upload-users-excel`, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'تم رفع الملف بنجاح',
+                        confirmButtonText: 'موافق',
+                        customClass: {
+                            title: 'text-blue',
+                            confirmButton: 'blue-button',
+                            cancelButton: 'red-button'
+                        },
+                        didOpen: () => {
+                            const popup = document.querySelector('.swal2-popup');
+                            if (popup) popup.setAttribute('dir', 'rtl');
+                        }
+                    });
+                    setFile(null);
+                } catch (error) {
+                    // التحقق من وجود response في الخطأ
+                    const errorMessage = error.response ? error.response.data.message : error.message;
+                    console.log(error.response)
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'حدث خطأ أثناء رفع الملف',
+                        text: errorMessage, // عرض الرسالة المناسبة من response
+                        confirmButtonText: 'حسناً',
+                        customClass: {
+                            title: 'text-red',
+                            confirmButton: 'blue-button',
+                            cancelButton: 'red-button'
+                        },
+                        didOpen: () => {
+                            const popup = document.querySelector('.swal2-popup');
+                            if (popup) popup.setAttribute('dir', 'rtl');
+                        }
+                    });
+                }
+                finally {
+                    setIsUploading(false); // إعادة تعيين الحالة بعد الانتهاء
+                }
+            }
+        });
     };
-
 
     return (
         <div>
@@ -54,8 +174,8 @@ const UploadUsersExcel = () => {
 
             <div className='p-3'>
                 <div className='box'>
-                    <div className='row d-flex p-3 parent'>
-                        <section className='col-sm-12 col-md p-5 box'>
+                    <div className='row d-flex p-3 parent gap-3'>
+                        <section className='col-sm-12 col-lg p-5 box'>
                             <div className='d-flex'>
                                 <div>
                                     <h2>الخطوة 1</h2>
@@ -71,7 +191,7 @@ const UploadUsersExcel = () => {
                             </ul>
                         </section>
 
-                        <section className='col-sm-12 col-md p-5 box'>
+                        <section className='col-sm-12 col-lg p-5 box'>
                             <div className='d-flex'>
                                 <div>
                                     <h2>الخطوة 2</h2>
@@ -86,7 +206,7 @@ const UploadUsersExcel = () => {
                             </ul>
                         </section>
 
-                        <section className='col-sm-12 col-md p-5 box'>
+                        <section className='col-sm-12 col-lg p-5 box'>
                             <div className='d-flex'>
                                 <div>
                                     <h2>الخطوة 3</h2>
@@ -107,43 +227,33 @@ const UploadUsersExcel = () => {
                     <div className='text-center mt-3'>
                         <h4>تحميل نموذج جدول البيانات</h4>
                         <div className='mt-3'>
-                            <Btn onClick={downloadActiveUsersExcel} name='مع البيانات الحالية' class='btn-outline-dark w-25 ms-3' />
-                            <a href={vide} download className="btn btn-dark w-25 ms-3">
+                            <Btn onClick={downloadActiveUsersExcel} name='مع البيانات الحالية' class='btn-outline-primary w-25 ms-3' />
+                            <a href={vide} download className="btn btn-primary w-25 ms-3">
                                 بدون البيانات الحالية
                             </a>
                         </div>
                     </div>
                 </div>
 
-
-
-
-
-
-
-
-
-
                 <div className='row d-flex p-3 parent box mt-4'>
                     <div className='d-flex gap-4'>
                         <section className='col-sm-12 col-md'>
                             <h5 className='title'>اختر نوع تحميل البيانات</h5>
                             <div className="row box-radio h-75">
-                                <label className="label1 col-12 flex items-center gap-2cursor-pointer bg-blue-50">
+                                <label className="label1 col-12 flex items-center gap-2 cursor-pointer bg-blue-50">
                                     <span className="text-gray-800 font-medium">تحميل بيانات جديدة</span>
                                     <input type="radio" name="dataOption" value="new" className="accent-black w-4 h-4" defaultChecked />
                                 </label>
 
-
-                                <label className="label2 col-12 flex items-center gap-2 cursor-pointer hover:bg-gray-50">
+                                <label style={{backgroundColor:'#e2e2e2'}} className="label2 col-12 flex items-center gap-2 cursor-not-allowed bg-gray-100 opacity-60">
                                     <span className="text-gray-800">تحديث البيانات الحالية</span>
-                                    <input type="radio" name="dataOption" value="update" className="accent-black w-4 h-4" />
+                                    <input type="radio" name="dataOption" value="update" className="accent-black w-4 h-4" disabled />
                                 </label>
                             </div>
                         </section>
 
                         <section className='col-sm-12 col-md'>
-                            <h5 className='title'>استيراد ملف المتاجر</h5>
+                            <h5 className='title'>استيراد ملف الموظفين</h5>
                             <label htmlFor="file-upload" className='p-1 h-75 cursor-pointer w-100 box-input text-center custom-file-upload'>
                                 <input 
                                     id="file-upload" 
@@ -158,9 +268,9 @@ const UploadUsersExcel = () => {
                         </section>
                     </div>
                     
-                    <div className='d-flex gap-3 justify-content-end'>
-                        <Btn onChange={() => setSelectedOption('new')} name='إعادة تعيين' class='btn-outline-dark' />
-                        <Btn onChange={() => setSelectedOption('new')} name='تحميل' class='btn-dark' />
+                    <div className='d-flex gap-3 justify-content-end mt-3'>
+                    <Btn onClick={() => { setFile(null); setMessage(''); }} name='إعادة تعيين' class='btn-outline-primary' />
+                    <Btn onClick={handleUpload} name='تحميل' class='btn-primary' disabled={isUploading} /> {/* تعطيل الزر أثناء التحميل */}
                     </div>
                 </div>
             </div>

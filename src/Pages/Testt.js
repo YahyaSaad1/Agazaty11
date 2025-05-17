@@ -39,7 +39,6 @@ function AddEmployee2(){
     const [role, setRole] = useState();
     const [disability, setDisability] = useState({});
 
-    console.log(disability)
     const calculateYearsOfWork = (hireDate) => {
         if (!hireDate) return 0;
         const today = new Date();
@@ -94,19 +93,33 @@ function AddEmployee2(){
         setAge(getAge(dateOfBirth));
     }, [dateOfBirth]);
 
-    console.log(roles)
+    useEffect(() => {
+    fetch(`${BASE_API_URL}/api/Role/GetAllRoles`, {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // إضافة التوكن في الهيدر
+        },
+    })
+        .then((res) => res.json())
+        .then((data) => setRoles(data))
+        .catch((err) => console.error("Error fetching roles:", err));
+    }, []);
 
-    useEffect(()=>{
-        fetch(`http://agazatyapi.runasp.net/api/Role/GetAllRoles`)
-        .then((res)=> res.json())
-        .then((data)=> setRoles(data))
-    }, [])
 
-    useEffect(()=>{
-        fetch(`http://agazatyapi.runasp.net/api/Department/GetAllDepartments`)
-        .then((res)=> res.json())
-        .then((data)=> setDepartments(data))
-    }, [])
+    useEffect(() => {
+    fetch(`${BASE_API_URL}/api/Department/GetAllDepartments`, {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        },
+    })
+        .then((res) => res.json())
+        .then((data) => setDepartments(data))
+        .catch((err) => console.error("Error fetching departments:", err));
+    }, []);
+
 
 
     
@@ -127,6 +140,15 @@ function AddEmployee2(){
                 icon: "warning",
                 confirmButtonColor: "#d33",
                 confirmButtonText: "حسنًا",
+                customClass: {
+                    title: 'text-blue',
+                    confirmButton: 'blue-button',
+                    cancelButton: 'red-button'
+                },
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
             });
             return;
         }
@@ -172,9 +194,18 @@ function AddEmployee2(){
                         icon: "success",
                         confirmButtonText: "مشاهدة الموظفين",
                         confirmButtonColor: "#0d6efd",
+                        customClass: {
+                            title: 'text-blue',
+                            confirmButton: 'blue-button',
+                            cancelButton: 'red-button'
+                        },
+                        didOpen: () => {
+                            const popup = document.querySelector('.swal2-popup');
+                            if (popup) popup.setAttribute('dir', 'rtl');
+                        }
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = "http://localhost:3000/employees/active";
+                            window.location.href = "/employees/active";
                         }
                     });
                 })
@@ -355,10 +386,6 @@ function AddEmployee2(){
                         <label htmlFor="exampleInputPassword1" className="form-label">كلمة المرور</label>
                         <input type="password" className="form-control" onChange={(e)=> setPassword(e.target.value)} placeholder="********" id="exampleInputPassword1" />
                     </div>
-                                {console.log(disability)}
-                                {console.log(monthsOfWork)}
-                                {console.log(normalLeavesCount)}
-
                     {disability === false && monthsOfWork <= 6 && yearsOfWork < 12 && yearsOfWork < 1 && age <= 50 ?
                     <div className="col-sm-6 col-md-6 col-lg-4 col-xl-3 mt-3">
                         <label htmlFor="exampleFormControlNumber10" className="form-label">عدد الاجازات الاعتيادية</label>

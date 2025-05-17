@@ -4,6 +4,8 @@ function ProfileDescription({userData}){
     const hireYear = new Date(userData.hireDate).getFullYear();
     const date = new Date().getFullYear();
 
+    const toArabicNumbers = (number) => (number !== undefined && number !== null) ? number.toString().replace(/[0-9]/g, (digit) => '٠١٢٣٤٥٦٧٨٩'[digit]) : '--';
+
     return(
         <div>
             <table className="m-0 table table-striped" style={{ borderTopLeftRadius: '15px', borderTopRightRadius: '15px', overflow: 'hidden'}}>
@@ -27,7 +29,7 @@ function ProfileDescription({userData}){
                     </tr>
                     <tr>
                         <th>تاريخ التعيين</th>
-                        <th className="text-start">{new Date(userData.hireDate).toLocaleDateString()}</th>
+                        <th className="text-start">{new Date(userData.hireDate).toLocaleDateString('ar-EG')}</th>
                     </tr>
                     <tr>
                         <th>البريد الإلكتروني</th>
@@ -45,26 +47,25 @@ function ProfileDescription({userData}){
                 <tbody>
                     <tr>
                         <th>رصيد الاجازات الاعتيادية السنوية</th>
-                        <th className="text-start">{userData.normalLeavesCount}</th>
+                        <th className="text-start">{toArabicNumbers(userData.normalLeavesCount)}</th>
                     </tr>
                     {hireYear <= 2015 &&
                         <tr>
-                            <th>رصيد اجازات ما قبل سنة 2015</th>
-                            <th className="text-start">{userData.normalLeavesCount_47}</th>
+                            <th>رصيد اجازات ما قبل سنة ٢٠١٥</th>
+                            <th className="text-start">{toArabicNumbers(userData.normalLeavesCount_47)}</th>
                         </tr>}
                     <tr>
-                        <th>رصيد الاجازات الاعتيادية سنة {date - 1}</th>
-                        <th className="text-start">{userData.normalLeavesCount_81Before1Years}</th>
+                        <th>رصيد الاجازات الاعتيادية سنة {toArabicNumbers(date - 1)}</th>
+                        <th className="text-start">{toArabicNumbers(userData.normalLeavesCount_81Before1Years)}</th>
                     </tr>
                     <tr>
-                        <th>رصيد الاجازات الاعتيادية سنة {date - 2}</th>
-                        <th className="text-start">{userData.normalLeavesCount_81Before2Years}</th>
+                        <th>رصيد الاجازات الاعتيادية سنة {toArabicNumbers(date - 2)}</th>
+                        <th className="text-start">{toArabicNumbers(userData.normalLeavesCount_81Before2Years)}</th>
                     </tr>
                     <tr>
-                        <th>رصيد الاجازات الاعتيادية سنة {date - 3}</th>
-                        <th className="text-start">{userData.normalLeavesCount_81Before3Years}</th>
+                        <th>رصيد الاجازات الاعتيادية سنة {toArabicNumbers(date - 3)}</th>
+                        <th className="text-start">{toArabicNumbers(userData.normalLeavesCount_81Before3Years)}</th>
                     </tr>
-                    
                 </tbody>
             </table>
         </div>

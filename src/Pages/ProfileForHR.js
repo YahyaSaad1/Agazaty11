@@ -5,25 +5,40 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Swal from 'sweetalert2';
 import { faTable } from "@fortawesome/free-solid-svg-icons";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function ProfileForHR(){
     const {userID} = useParams();
-    const [user, setUser] = useState([]);
+    const [userData, setUserData] = useState([]);
 
     useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/Account/GetUserById/${userID}`)
+        fetch(`${BASE_API_URL}/api/Account/GetUserById/${userID}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
         .then((res)=> res.json())
-        .then((data)=> setUser(data))
+        .then((data)=> setUserData(data))
     }, [userID])
+
 
     const handleLeaveUpdate = async () => {
         const { value: decision } = await Swal.fire({
-            title: 'هل تريد إضافة أم خصم أيام الإجازة؟',
+            title: 'هل تريد إضافة أم خصم أيام الاجازة؟',
             input: 'radio',
             inputOptions: {
                 true: 'إضافة أيام',
                 false: 'خصم أيام'
+            },customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
             },
             inputValidator: (value) => {
                 if (!value) {
@@ -45,6 +60,15 @@ function ProfileForHR(){
             showCancelButton: true,
             confirmButtonText: 'تنفيذ',
             cancelButtonText: 'إلغاء',
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+            },
             inputValidator: (value) => {
                 if (!value || isNaN(value) || parseInt(value) <= 0) {
                 return 'يرجى إدخال رقم أكبر من صفر';
@@ -58,7 +82,8 @@ function ProfileForHR(){
             const response = await fetch(`${BASE_API_URL}/api/NormalLeave/MinusOrAddNormalLeavesToUser/${userID}`, {
                 method: 'POST',
                 headers: {
-                'Content-Type': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                 days: parseInt(days),
@@ -67,7 +92,7 @@ function ProfileForHR(){
             });
         
             if (response.ok) {
-                Swal.fire('تم!', 'تم تعديل عدد أيام الإجازات بنجاح', 'success');
+                Swal.fire('تم!', 'تم تعديل عدد أيام الاجازات بنجاح', 'success');
             } else {
                 Swal.fire('خطأ!', 'حدث خطأ أثناء التعديل', 'error');
             }
@@ -79,8 +104,12 @@ function ProfileForHR(){
 
         const handleDownload = async () => {
             try {
-                const response = await fetch(`${BASE_API_URL}/api/Account/export-user-excel/${user.nationalID}`, {
-                    method: 'GET',
+                const response = await fetch(`${BASE_API_URL}/api/Account/export-user-excel/${userData.nationalID}`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    }
                 });
             
                 if (!response.ok) {
@@ -105,7 +134,7 @@ function ProfileForHR(){
         <div>
             <div className="d-flex mb-4 justify-content-between">
                 <div className="zzz d-inline-block p-3 ps-5">
-                    <h2 className="m-0">الملف الشخصي</h2>
+                    <h2 className="m-0">الملف {userData.firstName} {userData.secondName} الشخصي</h2>
                 </div>
                 <div className="d-flex">
                     <button onClick={handleDownload} className="m-3 btn btn-success d-flex justify-content-center align-items-center">
@@ -114,16 +143,16 @@ function ProfileForHR(){
                     </button>
 
                     <button className="m-3 btn btn-primary" onClick={handleLeaveUpdate}>
-                        تعديل عدد أيام الإجازات
+                        تعديل عدد أيام الاجازات
                     </button>
                 </div>
             </div>
             <div className="row">
                 <div className="col-sm-12 col-md-6 col-lg-5 col-xl-4 col-xxl-3 mt-4">
-                    <ProfileCom user={user} />
+                    <ProfileCom userData={userData} />
                 </div>
                 <div className="col-sm-12 col-md-6 col-lg-7 col-xl-8 col-xxl-9 mt-4">
-                    <ProfileDescription user={user} />
+                    <ProfileDescription userData={userData} />
                 </div>
             </div>
         </div>

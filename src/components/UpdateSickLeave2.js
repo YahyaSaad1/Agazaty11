@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function UpdateSickLeave2() {
     const leaveID = useParams().leaveID;
@@ -23,11 +23,20 @@ function UpdateSickLeave2() {
         // رسالة تأكيد قبل التحديث
         const confirmResult = await Swal.fire({
             title: "هل أنت متأكد؟",
-            text: "هل تريد فعلاً تحديث بيانات الإجازة؟",
+            text: "هل تريد فعلاً تحديث بيانات الاجازة؟",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "نعم، تحديث",
             cancelButtonText: "إلغاء",
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+            }
         });
     
         if (!confirmResult.isConfirmed) {
@@ -48,6 +57,7 @@ function UpdateSickLeave2() {
                 {
                     method: "PUT",
                     headers: {
+                        Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                         "Accept": "application/json",
                     },
@@ -58,17 +68,62 @@ function UpdateSickLeave2() {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("API Error:", errorData);
-                Swal.fire("خطأ!", `فشل إرسال الطلب: ${errorData.message || "يرجى المحاولة لاحقًا"}`, "error");
+                Swal.fire({
+                    title:'فشل إرسال الطلب!',
+                    text:`${errorData || "يرجى المحاولة لاحقًا"}`,
+                    icon:'error',
+                    confirmButtonText:'حسنًا',
+                    customClass: {
+                        title: 'text-red',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
+                })
                 return;
             } else {
                 const responseData = await response.json();
-                Swal.fire("نجاح!", `تم إرسال الطلب: ${responseData.message || "يرجى انتظار الموافقة"}`, "success")
-                    .then(() => {
-                        window.location.reload(); // تحديث الصفحة بعد نجاح الطلب
-                    });
+                Swal.fire({
+                    title:'تم إرسال الطلب!',
+                    text:`${responseData.message || "يرجى انتظار الموافقة"}`,
+                    icon:'success',
+                    confirmButtonText:'حسنًا',
+                    customClass: {
+                        title: 'text-blue',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
+                })
+                
+                .then(() => {
+                    window.location.reload(); // تحديث الصفحة بعد نجاح الطلب
+                });
             }
         } catch (error) {
-            Swal.fire("خطأ!", "حدث خطأ أثناء إرسال الطلب", "error");
+            Swal.fire({
+                title:'خطأ!',
+                text: "حدث خطأ أثناء إرسال الطلب",
+                icon:'error',
+                confirmButtonText:'حسنًا',
+                customClass: {
+                    title: 'text-red',
+                    confirmButton: 'blue-button',
+                    cancelButton: 'red-button'
+                },
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            })
+
+
             console.error("Error:", error);
         }
     };
@@ -90,6 +145,7 @@ function UpdateSickLeave2() {
                             id="exampleInputDeputy1"
                             aria-label="Default select example"
                             onChange={(e) => setCertified(JSON.parse(e.target.value))}
+                            required
                         >
                             <option value="">اختر الحالة</option>
                             <option value="true">مستحقة</option>
@@ -105,6 +161,7 @@ function UpdateSickLeave2() {
                             id="exampleInputDeputy1"
                             aria-label="Default select example"
                             onChange={(e) => setChronic(JSON.parse(e.target.value))}
+                            required
                         >
                             <option value="">اختر</option>
                             <option value="true">مزمن</option>
@@ -138,6 +195,8 @@ function UpdateSickLeave2() {
                             onChange={(e) => setEndDate(e.target.value)}
                             className="form-control"
                             id="endDate"
+                            disabled={!startDate}
+                            min={startDate || ""}
                             required
                         />
                     </div>

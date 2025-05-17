@@ -8,7 +8,7 @@ function Hint({leavesWating}) {
         <div>
             {leavesWating.map((leaveWaiting, index)=>{
                 return(
-                    <div key={index} to={'/agazaty'} className='box mt-3 text-decoration-none'>
+                    <div key={index} to={'/agazaty'} className='box mb-4 text-decoration-none'>
                         <div className="d-flex row rounded-3">
                             <div className='col-3 hintImage rounded-3 d-flex justify-content-center align-items-center ms-3'>
                                 <img src={time} className='rounded-3' alt="hintImage" />
@@ -23,7 +23,7 @@ function Hint({leavesWating}) {
                                     : leaveWaiting.holder === 2 ? <span className='cursor-pointer text-primary' title={leaveWaiting.generalManagerName}>المدير المختص</span>
                                     : null}
                                 </p>
-                                <BtnLink id={leaveWaiting.id} name={`#${leaveWaiting.id}`} link='/normal-leave-request' class='btn-warning rounded-3 p-1 d-inline-block m-0' />
+                                <BtnLink id={leaveWaiting.id} name={`${leaveWaiting.id.toString().replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d])}#`} link='/normal-leave-request' class='btn-warning rounded-3 p-1 d-inline-block m-0' />
                             </div>
                             <div className='col-2 d-flex justify-content-center'>
                                 <BtnLink id={leaveWaiting.id} name='تفاصيل الاجازة' link={`/normal-leave-request`} class="btn-primary align-self-center" />

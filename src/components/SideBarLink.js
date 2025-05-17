@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import '../CSS/LinkSideBar.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function LinkSideBar(props) {
     const userID = localStorage.getItem("userID");
@@ -17,34 +17,88 @@ function LinkSideBar(props) {
     const [waitingCertifiedSickLeaves, setWaitingCertifiedSickLeaves] = useState([]);
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByCoWorkerID/${userID}`)
+        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByCoWorkerID/${userID}`, {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            },
+        })
             .then((res) => res.json())
             .then((data) => setLeavesWating(data))
-    }, [userID]);
+            .catch((err) => console.error("Error fetching co-worker leaves:", err));
+        }, [userID]);
+
+        useEffect(() => {
+        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByDirect_ManagerID/${userID}`, {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => setLeavesWatingForDirect(data))
+            .catch((err) => console.error("Error fetching direct manager leaves:", err));
+        }, [userID]);
+
+        useEffect(() => {
+        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByGeneral_ManagerID/${userID}`, {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => setLeavesWatingForGeneral(data))
+            .catch((err) => console.error("Error fetching general manager leaves:", err));
+        }, [userID]); // عدلت التبعيات لتشمل userID
+
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByDirect_ManagerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => {setLeavesWatingForDirect(data)})
-    }, [userID]);
+        const fetchWaitingSickLeaves = async () => {
+            try {
+            const response = await fetch(`${BASE_API_URL}/api/SickLeave/GetAllWaitingSickLeaves`, {
+                method: "GET",
+                headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`, // إضافة التوكن هنا
+                },
+            });
+
+            const data = await response.json();
+            setWaitingSickLeaves(data);
+            } catch (error) {
+            console.error("Error fetching waiting sick leaves:", error);
+            }
+        };
+
+        fetchWaitingSickLeaves();
+        }, [token]);  // أضفنا التوكن كاعتماد داخل الـ useEffect
+
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByGeneral_ManagerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => {setLeavesWatingForGeneral(data)})
-    }, []);
+        const fetchWaitingCertifiedSickLeaves = async () => {
+            try {
+            const response = await fetch(`${BASE_API_URL}/api/SickLeave/GetAllWaitingCertifiedSickLeaves`, {
+                method: "GET",
+                headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`, // إضافة التوكن هنا
+                },
+            });
 
-    useEffect(() => {
-        fetch(`${BASE_API_URL}/api/SickLeave/GetAllWaitingSickLeaves`)
-            .then((res) => res.json())
-            .then((data) => {setWaitingSickLeaves(data)})
-    }, []);
+            const data = await response.json();
+            setWaitingCertifiedSickLeaves(data);
+            } catch (error) {
+            console.error("Error fetching waiting certified sick leaves:", error);
+            }
+        };
 
-    useEffect(() => {
-        fetch(`${BASE_API_URL}/api/SickLeave/GetAllWaitingCertifiedSickLeaves`)
-            .then((res) => res.json())
-            .then((data) => {setWaitingCertifiedSickLeaves(data)})
-    }, []);
+        fetchWaitingCertifiedSickLeaves();
+        }, [token]);  // أضفنا التوكن كاعتماد داخل الـ useEffect
+
 
     return (
         <>

@@ -3,28 +3,45 @@ import '../CSS/LeaveRequests.css';
 import { useEffect, useState } from 'react';
 import BtnLink from '../components/BtnLink';
 import Btn from '../components/Btn';
-import API from "../Data" ;
-import { BASE_API_URL } from '../server/serves';
+import { BASE_API_URL, token } from '../server/serves';
 
-function NormalLeaveRequest() {
+function NormalLeaveRequest({handleError}) {
     
-    const { id } = useParams();
-    const LeaveID = Number(id);
+    const { LeaveID } = useParams();
     const [leave, setLeave] = useState(null);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/GetNormalLeaveById/${LeaveID}`)
-            .then((res) => res.json())
-            .then((data) => {
-                setLeave(data);
-            })
-            .catch((err) => console.error("Error fetching leave data:", err));
-    }, [LeaveID]);
+        fetch(`${BASE_API_URL}/api/NormalLeave/GetNormalLeaveById/${LeaveID}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        }
+        })
+        .then((res) => {
+            if (res.status === 403 || res.status === 404) {
+            handleError(res.status);
+            return null;
+            }
+            return res.json();
+        })
+        .then((data) => {
+            if (data) setLeave(data);
+        })
+        .catch((err) => console.error("Error fetching leave data:", err));
+    }, [LeaveID, handleError]);
+
 
     useEffect(() => {
         if (leave && leave.userID) { 
-            fetch(`${BASE_API_URL}/api/Account/GetUserById/${leave.userID}`)
+            fetch(`${BASE_API_URL}/api/Account/GetUserById/${leave.userID}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    })
                 .then((res) => res.json())
                 .then((data) => {
                     setUser(data);

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { useParams, useNavigate } from "react-router-dom";
-import API from "../Data" ;
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function EditDepartment() {
     const { id } = useParams();
@@ -12,21 +11,34 @@ function EditDepartment() {
 
     const [users, setUsers] = useState([]);
     const [managerId, setManagerId] = useState('');
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/Account/GetAllActiveUsers`)
-        .then((res)=> res.json())
-        .then((data)=> setUsers(data))
-    }, [])
-
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/Department/GetDepartmentById/${id}`)
+        fetch(`${BASE_API_URL}/api/Account/GetAllActiveUsers`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then((res) => res.json())
+        .then((data) => setUsers(data))
+    }, [])
+    
+    useEffect(() => {
+        fetch(`${BASE_API_URL}/api/Department/GetDepartmentById/${id}`, {
+            method: "GET",
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // إضافة التوكن في الهيدر
+            },
+        })
             .then((res) => res.json())
             .then((data) => {
-                setDepartment(data);
-                setManagerId(data.managerId);
+            setDepartment(data);
+            setManagerId(data.managerId);
             })
-            .catch((error) => console.error("حدث خطأ أثناء جلب البيانات:", error));
-    }, [id]);
+            .catch((error) => console.error("حدث خطأ أثناء جلب البيانات:", error)); // معالجة الأخطاء
+        }, [id]);
+
 
     const handleChange = (e) => {
         setDepartment({ ...department, [e.target.name]: e.target.value });
@@ -43,12 +55,20 @@ function EditDepartment() {
     
         Swal.fire({
             title: `<span style='color:#0d6efd;'>هل أنت متأكد من تحديث بيانات قسم ${department.name} ؟</span>`,
+            text: "لا يمكن التراجع عن هذا الإجراء!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "نعم، تحديث",
             cancelButtonText: "إلغاء",
-            confirmButtonColor: "#0d6efd",
-            cancelButtonColor: "#d33",
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+            }
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
@@ -56,6 +76,7 @@ function EditDepartment() {
                         method: "PUT",
                         headers: {
                             "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
                         },
                         body: JSON.stringify(updatedData),  // إرسال البيانات المحدثة مع رئيس القسم
                     });
@@ -66,6 +87,15 @@ function EditDepartment() {
                             icon: "success",
                             confirmButtonText: "مشاهدة الأقسام",
                             confirmButtonColor: "#0d6efd",
+                            customClass: {
+                                title: 'text-blue',
+                                confirmButton: 'blue-button',
+                                cancelButton: 'red-button'
+                            },
+                            didOpen: () => {
+                                const popup = document.querySelector('.swal2-popup');
+                                if (popup) popup.setAttribute('dir', 'rtl');
+                            },
                         }).then(() => {
                             navigate("/departments");
                         });
@@ -74,6 +104,15 @@ function EditDepartment() {
                             title: "حدث خطأ!",
                             text: "لم يتم تحديث البيانات، حاول مرة أخرى.",
                             icon: "error",
+                            customClass: {
+                                title: 'text-red',
+                                confirmButton: 'blue-button',
+                                cancelButton: 'red-button'
+                            },
+                            didOpen: () => {
+                                const popup = document.querySelector('.swal2-popup');
+                                if (popup) popup.setAttribute('dir', 'rtl');
+                            },
                         });
                     }
                 } catch (error) {
@@ -82,6 +121,15 @@ function EditDepartment() {
                         title: "خطأ في الاتصال!",
                         text: "تأكد من تشغيل السيرفر وحاول مجدداً.",
                         icon: "error",
+                        customClass: {
+                            title: 'text-red',
+                            confirmButton: 'blue-button',
+                            cancelButton: 'red-button'
+                        },
+                        didOpen: () => {
+                            const popup = document.querySelector('.swal2-popup');
+                            if (popup) popup.setAttribute('dir', 'rtl');
+                        },
                     });
                 }
             }

@@ -3,21 +3,41 @@ import '../CSS/LeaveRequests.css';
 import { useEffect, useState } from 'react';
 import BtnLink from '../components/BtnLink';
 import Btn from '../components/Btn';
-import { BASE_API_URL, useUserData } from '../server/serves';
+import { BASE_API_URL, token, useUserData } from '../server/serves';
 
-function UserCasualLeaveRequest() {
+function UserCasualLeaveRequest({handleError}) {
     const {leaveID} = useParams();
     const [leave, setLeave] = useState([]);
     const userData = useUserData();
 
-    useEffect(() => {
-        fetch(`${BASE_API_URL}/api/CasualLeave/GetCasualLeaveById/${leaveID}`)
-            .then((res) => res.json())
-            .then((data) => {
+useEffect(() => {
+    fetch(`${BASE_API_URL}/api/CasualLeave/GetCasualLeaveById/${leaveID}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+    })
+        .then((res) => {
+            if (res.status === 403 || res.status === 404) {
+                handleError(res.status);
+                return null;
+            }
+
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then((data) => {
+            if (data) {
                 setLeave(data);
-            })
-            .catch((err) => console.error("Error fetching leave data:", err));
-    }, [leaveID]);
+            }
+        })
+        .catch((err) => console.error("Error fetching leave data:", err));
+}, [leaveID]);
+
+
 
     return (
         <div>
@@ -54,7 +74,6 @@ function UserCasualLeaveRequest() {
                                 <th scope="col">رقم الهاتف</th>
                                 <th scope="col" className="text-start">{userData ? userData.phoneNumber : "جاري التحميل..."}</th>
                             </tr>
-                            {console.log(leave)}
                             <tr>
                                 <th scope="col">القسم</th>
                                 <th scope="col" className="text-start">{userData ? userData.departmentName : "جاري التحميل..."}</th>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { useParams, useNavigate } from "react-router-dom";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function EditHoliday() {
     const { holidayID } = useParams();
@@ -9,15 +9,21 @@ function EditHoliday() {
     const [holiday, setHoliday] = useState({ name: "", date: "" });
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/Holiday/GetHolidayById/${holidayID}`)
-            .then((res) => res.json())
-            .then((data) => {
-                // تنسيق التاريخ ليظهر بصيغة YYYY-MM-DD
-                const formattedDate = data.date ? data.date.slice(0, 10) : "";
-                setHoliday({ ...data, date: formattedDate });
-            })
-            .catch((error) => console.error("خطأ في جلب البيانات:", error));
-    }, [holidayID]);
+    fetch(`${BASE_API_URL}/api/Holiday/GetHolidayById/${holidayID}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        }
+    })
+        .then((res) => res.json())
+        .then((data) => {
+            // تنسيق التاريخ ليظهر بصيغة YYYY-MM-DD
+            const formattedDate = data.date ? data.date.slice(0, 10) : "";
+            setHoliday({ ...data, date: formattedDate });
+        })
+        .catch((error) => console.error("خطأ في جلب البيانات:", error));
+}, [holidayID]);
 
 
     const handleChange = (e) => {
@@ -29,18 +35,29 @@ function EditHoliday() {
     
         Swal.fire({
             title: `<span style='color:#0d6efd;'>هل أنت متأكد من تحديث ${holiday.name}؟</span>`,
+            text: "لا يمكن التراجع عن هذا الإجراء!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "نعم، تحديث",
             cancelButtonText: "إلغاء",
-            confirmButtonColor: "#0d6efd",
-            cancelButtonColor: "#d33",
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+            }
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
                     const response = await fetch(`${BASE_API_URL}/api/Holiday/UpdateHoliday/${holidayID}`, {
                         method: "PUT",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
                         body: JSON.stringify(holiday),
                     });
     
@@ -53,13 +70,32 @@ function EditHoliday() {
                             title: "حدث خطأ!",
                             text: errorMessage,
                             icon: "error",
+                            confirmButtonText: "حسنًا",
+                            customClass: {
+                                title: 'text-red',
+                                confirmButton: 'blue-button',
+                                cancelButton: 'red-button'
+                            },
+                            didOpen: () => {
+                                const popup = document.querySelector('.swal2-popup');
+                                if (popup) popup.setAttribute('dir', 'rtl');
+                            }
                         });
                     } else {
                         Swal.fire({
                             title: `<span style='color:#0d6efd;'>تم التحديث بنجاح.</span>`,
                             icon: "success",
-                            confirmButtonText: "عرض الإجازات",
+                            confirmButtonText: "عرض الاجازات",
                             confirmButtonColor: "#0d6efd",
+                            customClass: {
+                                title: 'text-blue',
+                                confirmButton: 'blue-button',
+                                cancelButton: 'red-button'
+                            },
+                            didOpen: () => {
+                                const popup = document.querySelector('.swal2-popup');
+                                if (popup) popup.setAttribute('dir', 'rtl');
+                            }
                         }).then(() => navigate("/holidays"));
                     }
                 } catch (error) {
@@ -68,6 +104,15 @@ function EditHoliday() {
                         title: "خطأ في الاتصال!",
                         text: "تأكد من تشغيل السيرفر.",
                         icon: "error",
+                        customClass: {
+                            title: 'text-red',
+                            confirmButton: 'blue-button',
+                            cancelButton: 'red-button'
+                            },
+                        didOpen: () => {
+                            const popup = document.querySelector('.swal2-popup');
+                            if (popup) popup.setAttribute('dir', 'rtl');
+                        }
                     });
                 }
             }
@@ -85,7 +130,7 @@ function EditHoliday() {
 
             <div className="row">
                 <div className="col-sm-12 col-md-6 mt-3">
-                    <label htmlFor="name" className="form-label">اسم الإجازة</label>
+                    <label htmlFor="name" className="form-label">اسم الاجازة</label>
                     <input
                         className="form-control"
                         type="text"
@@ -97,7 +142,7 @@ function EditHoliday() {
                     />
                 </div>
                 <div className="col-sm-12 col-md-6 mt-3">
-                    <label htmlFor="date" className="form-label">تاريخ الإجازة</label>
+                    <label htmlFor="date" className="form-label">تاريخ الاجازة</label>
                     <input
                         type="date"
                         className="form-control"

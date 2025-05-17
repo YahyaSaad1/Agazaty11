@@ -1,18 +1,24 @@
 import React, { useEffect, useState } from "react";
 import BtnLink from "../components/BtnLink";
-import API from "../Data" ;
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPrint } from "@fortawesome/free-solid-svg-icons";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function DesPermit() {
     const [permitLeaves, setPermitLeaves] = useState([]);
 
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/PermitLeave/GetAllPermitLeave`)
-        .then((res)=> res.json())
-        .then((data)=> setPermitLeaves(data))
-    }, [])
+    useEffect(() => {
+    fetch(`${BASE_API_URL}/api/PermitLeave/GetAllPermitLeave`, {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        },
+    })
+        .then((res) => res.json())
+        .then((data) => setPermitLeaves(data))
+        .catch((err) => console.error("Error fetching permit leaves:", err));
+    }, []);
 
     return (
         <div>
@@ -40,12 +46,22 @@ function DesPermit() {
                                 permitLeaves.map((leave, index) => (
                                     <tr key={index}>
                                         <th>{leave.userName}</th>
-                                        <th>{new Date(leave.startDate).toLocaleDateString()}</th>
-                                        <th>{new Date(leave.endDate).toLocaleDateString()}</th>
-                                        <th> {leave.days} أيام</th>
-                                        {leave.respononseDone === true ? <th>مقبولة</th>
-                                        : leave.respononseDone === false ? <th>مرفوضة</th>
-                                        : <th>معلقة</th>
+                                        {leave.startDate === "0001-01-01T00:00:00" ? <th className="text-danger">لم يحدد بعد</th>
+                                        :<th>{new Date(leave.startDate).toLocaleDateString('ar-EG')}</th>}
+
+                                        {leave.endDate === "0001-01-01T00:00:00" ? <th className="text-danger">لم يحدد بعد</th>
+                                        :<th>{new Date(leave.endDate).toLocaleDateString('ar-EG')}</th>}
+
+                                        {leave.days === null ? <th className="text-danger">لم يُحتسب بعد</th>
+                                        :<th>{leave.days.toString().replace(/[0-9]/g, (digit) => '٠١٢٣٤٥٦٧٨٩'[digit])} أيام</th>
+}
+                                        {leave.certified === true
+                                            ? <th className="text-success">مقبولة</th>
+                                            : (leave.responseDoneFinal === false && leave.respononseDoneForMedicalCommitte === false)
+                                            ? <th className="text-primary">معلقة عند التحديث الأول</th>
+                                            : (leave.responseDoneFinal === false && leave.respononseDoneForMedicalCommitte === true)
+                                            ? <th className="text-primary">معلقة عند التحديث الثاني</th>
+                                            : <th className="text-danger">مرفوضة</th>
                                         }
                                         <th>
                                             <FontAwesomeIcon icon={faPrint} fontSize={'26px'} color="blue" className="printer" />
@@ -57,7 +73,7 @@ function DesPermit() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="7" className="text-center text-danger p-3">لا يوجد اجازات حتى الآن</td>
+                                    <td colSpan="7" className="text-center text-danger p-3">لا يوجد تصاريح حتى الآن</td>
                                 </tr>
                             )}
                         </tbody>

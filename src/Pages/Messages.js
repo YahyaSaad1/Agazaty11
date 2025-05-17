@@ -1,40 +1,79 @@
 import React, { useEffect, useState } from "react";
 import swal from "sweetalert";
-import API from "../Data";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function Message() {
     const userID = localStorage.getItem("userID");
     const [leaveWating, setLeaveWating] = useState([]);
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByCoWorkerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => {
-                setLeaveWating(data);
-            });
+        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByCoWorkerID/${userID}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then((res) => {
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return res.json();
+        })
+        .then((data) => {
+            setLeaveWating(data);
+        })
+        .catch((error) => {
+            console.error("Error fetching leave data:", error);
+            setLeaveWating([]);
+        });
     }, [userID]);
 
     const updateDecision = (leaveID, CoworkerDecision) => {
         const actionText = CoworkerDecision ? "الموافقة" : "الرفض";
 
+        // Swal.fire({
+        //     title: `هل أنت متأكد من ${actionText}؟`,
+        //     text: "لن تتمكن من التراجع بعد ذلك!",
+        //     icon: "warning",
+        //     confirmButtonText: 'نعم، إرسال',
+        //     cancelButtonText: 'إلغاء',
+        //     buttons: {
+        //         cancel: {
+        //             title: 'text-red',
+        //             text: "إلغاء",
+        //             visible: true,
+        //             className: "red-button",
+        //             closeModal: true,
+        //         },
+        //         confirm: {
+        //             title: 'text-blue',
+        //             text: "نعم",
+        //             className: "blue-button",
+        //             closeModal: false,
+        //         }
+        //     },
+        //     dangerMode: true,
+        // })
+
         swal({
             title: `هل أنت متأكد من ${actionText}؟`,
-            text: "لن تتمكن من التراجع بعد ذلك",
+            text: "لن تتمكن من التراجع بعد ذلك!",
             icon: "warning",
-
             confirmButtonText: 'نعم، إرسال',
             cancelButtonText: 'إلغاء',
             buttons: {
                 cancel: {
+                    title: 'text-red',
                     text: "إلغاء",
                     visible: true,
-                    className: "swal-button--cancel",
+                    className: "red-button",
                     closeModal: true,
                 },
                 confirm: {
+                    title: 'text-blue',
                     text: "نعم",
-                    className: "swal-button--confirm",
+                    className: "blue-button",
                     closeModal: false,
                 },
             },
@@ -45,6 +84,7 @@ function Message() {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
                     },
                 })
                     .then((res) => {
@@ -56,6 +96,11 @@ function Message() {
                     .then(() => {
                         swal("تم التحديث بنجاح!", {
                             icon: "success",
+                            customClass: {
+                            title: 'text-red',
+                            confirmButton: 'blue-button',
+                            cancelButton: 'red-button'
+                        },
                         }).then(() => {
                             window.location.reload();
                         });
@@ -87,7 +132,7 @@ function Message() {
                                 من يوم {new Date(leave.startDate).toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' })} إلى يوم{" "}
                                 {new Date(leave.endDate).toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                             </p>
-                            <p>ملحوظات الزميل : {leave.notesFromEmployee}</p>
+                            <p>ملحوظات الزميل : {leave.notesFromEmployee || "بدون"}</p>
 
                             <button className="btn btn-primary m-2 w-25" onClick={() => updateDecision(leave.id, true)}>
                                 موافقة

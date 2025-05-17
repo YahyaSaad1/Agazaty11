@@ -1,4 +1,4 @@
-import { Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import './App.css';
 import Login from './Pages/Login';
 import LoginCom from './components/LoginCom';
@@ -59,31 +59,72 @@ import AddHoliday from './Pages/AddHoliday';
 import EditHoliday from './Pages/EditHoliday';
 import UploadUsersExcel from './Pages/Test';
 import RequireAuth from './RequireAuth';
-import { userID } from './server/serves';
 import AddEmployee2 from './Pages/Testt';
+import Error403 from './Pages/Error403';
+import Team from './Pages/Team';
+import ChatBot from './Pages/ChatBot';
+import LandingPage from './Pages/LandingPage';
+import AgazatyPermit from './Pages/AgazatyPermit';
+import React from 'react';
 
 function App() {
 
   // const userID = "23651146325632" // ساره
+  // const userID = "23653256325637"; // أمين
+  // const userID = "20233362565777" // عبدالله
+  // const userID = "20233362565777" // يحيى
+  // const userID = "20233362565777" // احمد علي
+
+
+
+  // const userID = "12345678991111" // نجوى
+  // const userID = "20210562565999"; // ندى
   // const userID = "30202356545696" // همام
   // const userID = "30236542365236" // عماد
-  // const userID = "23653256325637"; // أمين
   // const userID = "30309092701066"; // مجدي
-  // const userID = "12345678991111" // نجوى
+
+
+
+  const ErrorBoundary = ({ children }) => {
+  const navigate = useNavigate();
+
+  const handleError = (status) => {
+    if (status === 403) {
+      navigate('/error403');
+    } else if (status === 404) {
+      navigate('/error404');
+    }
+  };
+
+  return (
+    <div>
+      {React.cloneElement(children, { handleError })}
+    </div>
+  );
+};
+
 
 
   return (
     <div className="App" dir="rtl">
       <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />}>
           <Route index element={<LoginCom />} />
-          {/* <Route path='login' element={<LoginCom />} /> */}
           <Route path="forgetpassword" element={<ForgetPassword />} />
           <Route path="otpcode" element={<OTPCode />} />
           <Route path="resetpassword" element={<ResetPassword />} />
         </Route>
 
+        <Route path='LandingBage' element={<LandingPage />} />
+
+
+        <Route path="team" element={<Team />} />
+        <Route path="ChatBot" element={<ChatBot />} />
+
         <Route element={<RequireAuth/>}>
+          <Route path="error403" element={<Error403 />} />
+          <Route path="error404" element={<Error404 />} />
           <Route
             path="/"
             element={
@@ -98,6 +139,7 @@ function App() {
                 </div>
               </div>
             }
+
           >
             {/* خلصان */}
             <Route index element={<Home />} />
@@ -105,18 +147,25 @@ function App() {
             <Route path="casual-leave" element={<CasualLeave />} />
             <Route path="sick-leave" element={<SickLeave />} />
             <Route path="Permit" element={<Permit />} />
+
             <Route path="holidays" element={<Holidays />} />
             <Route path="add-holiday" element={<AddHoliday />} />
             <Route path="holiday/edit/:holidayID" element={<EditHoliday />} />
+
             <Route path="messages" element={<Messages />} />
-            <Route path="about" element={<About />} />
             <Route path="profile" element={<Profile />} />
+
             <Route path="agazaty" element={<Agazaty />} />
             <Route path="agazaty/normal" element={<AgazatyNormal />} />
             <Route path="agazaty/casual" element={<AgazatyCasual />} />
             <Route path="agazaty/sick" element={<AgazatySick />} />
-            <Route path="sitting" element={<Sitting />} />
-            <Route path="normal-leave-request/:id" element={<NormalLeaveRequest />} />
+            <Route path="agazaty/permit" element={<AgazatyPermit />} />
+
+            
+            <Route path="normal-leave-request/:LeaveID" element={
+              <ErrorBoundary>
+              <NormalLeaveRequest />
+              </ErrorBoundary>} />
             <Route path="casual-leave-request/:id" element={<CasualLeaveRequestManger />} />
             <Route path="sick-leave-request/:leaveID" element={<SickLeaveRequest />} />
             <Route path="update-sick-leave/:leaveID" element={<UpdateSickLeave />} />
@@ -128,18 +177,22 @@ function App() {
             <Route path="departments" element={<Departments />} />
             <Route path="add-Employee" element={<AddEmployee />} />
             <Route path="add-Employee2" element={<AddEmployee2 />} />
-            <Route path="add-Employees" element={<Error404 />} />
+            <Route path="error404" element={<Error404 />} />
             <Route path="add-department" element={<AddDepartment />} />
             <Route path="department/:id/edit" element={<EditDepartment />} />
             <Route path="employees/active" element={<Employees />} />
             <Route path="employees/inactive" element={<Archives />} />
             <Route path="UploadUsersExcel" element={<UploadUsersExcel />} />
+            <Route path="about" element={<About />} />
+            <Route path="sitting" element={<Sitting />} />
             {/* <Route path="archives" element={<Archives />} /> */}
+
+
             <Route path="update-normal-leave/:leaveID" element={<UpdateNormalLeave />} />
 
+
             {/* عرض الاجازة بشكل منفصل */}
-            <Route path="direct-manager/normal-leave-request/:id" element={<NormalLeaveRequestManager />} />
-            <Route path="general-manager/normal-leave-request/:id" element={<NormalRequestManager />} />
+            <Route path="manger-normal-leave-request/:id" element={<NormalRequestManager />} />
 
             {/* سجل الاجازات الشامل */}
             <Route path="employee/:userId" element={<EditEmployeeForHR />} />
@@ -153,7 +206,7 @@ function App() {
 
             {/* طلبات الاجازات عن المديرين */}
             <Route path="leave-record" element={<LeaveRecord />} />
-            <Route path="general/leave-record" element={<GeneralManagerLeave />} />
+            {/* <Route path="general/leave-record" element={<GeneralManagerLeave />} /> */}
 
             <Route path="exceptional-leave" element={<ExceptionalLeave />} />
             <Route path="sick-leaves-record" element={<SickLeavesRecord />} />
@@ -173,7 +226,10 @@ function App() {
 
 
             <Route path="user/normal-leave-request/:leaveID" element={<UserNormalLeaveRequest />} />
-            <Route path="user/casual-leave-request/:leaveID" element={<UserCasualLeaveRequest />} />
+            <Route path="user/casual-leave-request/:leaveID" element={
+              <ErrorBoundary>
+                <UserCasualLeaveRequest />
+              </ErrorBoundary>} />
             <Route path="user/sick-leave-request/:leaveID" element={<UserSickLeaveRequest />} />
 
 

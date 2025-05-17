@@ -1,8 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { token } from "./server/serves";
 
 function RequireAuth() {
-    const token = localStorage.getItem("token");
-
     return token? <Outlet/> : <Navigate to="/login" />;
 }
 

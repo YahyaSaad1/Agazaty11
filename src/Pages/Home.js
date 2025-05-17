@@ -6,17 +6,56 @@ import Calendar from "../components/Calendar";
 import BtnLink from "../components/BtnLink";
 import ShortData from "../components/ShortData";
 import { useEffect, useState } from "react";
-import { BASE_API_URL, roleName } from "../server/serves";
+import { BASE_API_URL, roleName, token } from "../server/serves";
+import Swal from "sweetalert2";
 
 function Home(){
     const userID = localStorage.getItem("userID");
     const [leavesWating, setLeavesWating] = useState([]);
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByUserID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => setLeavesWating(data))
+    fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByUserID/${userID}`, {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        },
+    })
+        .then((res) => {
+        if (!res.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return res.json();
+        })
+        .then((data) => setLeavesWating(data))
+        .catch((error) => {
+        console.error("Error fetching leave requests:", error);
+        setLeavesWating([]);
+        });
     }, [userID]);
+
+
+    const showErrorAlert = () => {
+        Swal.fire({
+            title: "التواصل مع مدير الموارد البشرية؟",
+            text: "هاتف: 01015652527",
+            icon: "warning",
+            iconHtml: "؟",  
+            confirmButtonText: "حسنًا",
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+
+                const textElement = popup.querySelector('.swal2-html-container');
+                if (textElement) textElement.classList.add('abdo');
+            }
+            });
+        };
 
     return(
         <div>
@@ -40,14 +79,14 @@ function Home(){
                         <Calendar />
                     </div>
                     <div className="box mt-2">
-                        <h5>التواصل مع الدعم الفني</h5>
+                        <h5 className="text-bold">التواصل مع الدعم الفني</h5>
                         <p>يمكنك مراسلتنا لأي استفسارات أو مشكلات تواجهها أثناء استخدام النظام</p>
-                        <BtnLink name="اتصل بنا" link="/" class='btn-primary' />
+                        <BtnLink onClick={() => showErrorAlert()} name="تواصل معنًا" link="/" class='btn-primary' />
                     </div>
                     <div className="box mt-2">
-                        <h5>سياسات الاجازات</h5>
-                        <p>تعرف على قوانين وإجراءات طلب الإجازات لضمان تجربة سلسة ومريحة</p>
-                        <BtnLink name="الأطلاع الآن" link="/inquiries" class='btn-primary' />
+                        <h5 className="text-bold">سياسات الاجازات</h5>
+                        <p>تعرف على قوانين وإجراءات طلب الاجازات لضمان تجربة سلسة ومريحة</p>
+                        <BtnLink name="الإطلاع الآن" link="/inquiries" class='btn-primary' />
                     </div>
                 </div>
             </div>

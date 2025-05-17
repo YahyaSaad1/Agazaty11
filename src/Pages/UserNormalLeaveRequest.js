@@ -3,7 +3,7 @@ import '../CSS/LeaveRequests.css';
 import { useEffect, useState } from 'react';
 import BtnLink from '../components/BtnLink';
 import Btn from '../components/Btn';
-import { BASE_API_URL } from '../server/serves';
+import { BASE_API_URL, token } from '../server/serves';
 
 function UserNormalLeaveRequest() {
     const {leaveID} = useParams();
@@ -11,24 +11,59 @@ function UserNormalLeaveRequest() {
     const [user, setUser] = useState([]);
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/GetNormalLeaveById/${leaveID}`)
-            .then((res) => res.json())
-            .then((data) => {
-                setLeave(data);
-            })
-            .catch((err) => console.error("Error fetching leave data:", err));
+        fetch(`${BASE_API_URL}/api/NormalLeave/GetNormalLeaveById/${leaveID}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(async (res) => {
+            if (res.status === 403) {
+                window.location.href = "/error403";
+                return;
+            }
+
+            if (res.status === 404) {
+                window.location.href = "/error404";
+                return;
+            }
+
+            const data = await res.json();
+            setLeave(data);
+        })
+        .catch((err) => console.error("Error fetching leave data:", err));
     }, [leaveID]);
 
-    useEffect(() => {
-        if (leave && leave.userID) { 
-            fetch(`${BASE_API_URL}/api/Account/GetUserById/${leave.userID}`)
-                .then((res) => res.json())
-                .then((data) => {
-                    setUser(data);
-                })
-                .catch((err) => console.error("Error fetching user data:", err));
+
+
+       useEffect(() => {
+        if (leave && leave.userID) {
+            fetch(`${BASE_API_URL}/api/Account/GetUserById/${leave.userID}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(async (res) => {
+                if (res.status === 403) {
+                    window.location.href = "/error403";
+                    return;
+                }
+
+                if (res.status === 404) {
+                    window.location.href = "/error404";
+                    return;
+                }
+
+                const data = await res.json();
+                setUser(data);
+            })
+            .catch((err) => console.error("Error fetching user data:", err));
         }
     }, [leave]);
+
 
     return (
         <div>

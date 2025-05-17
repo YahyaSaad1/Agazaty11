@@ -1,33 +1,55 @@
+
+
+
+
+
+
 import React, { useEffect, useState } from "react";
 import BtnLink from "../components/BtnLink";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token, userID } from "../server/serves";
 
 function LeaveRecord() {
-    const userID = localStorage.getItem("userID");
     const [leavesWating, setLeavesWating] = useState([]);
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByGeneral_ManagerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => setLeavesWating(Array.isArray(data) ? data : []))
-            .catch((error) => {
+        const fetchLeaves = async () => {
+            try {
+                const urls = [
+                    `${BASE_API_URL}/api/NormalLeave/WaitingByGeneral_ManagerID/${userID}`,
+                    `${BASE_API_URL}/api/NormalLeave/WaitingByDirect_ManagerID/${userID}`
+                ];
+
+                const requests = urls.map((url) => 
+                    fetch(url, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }).then((res) => {
+                        if (!res.ok) throw new Error("Network response was not ok");
+                        return res.json();
+                    })
+                );
+
+                const results = await Promise.allSettled(requests);
+
+                const combinedData = results.reduce((acc, result) => {
+                    if (result.status === "fulfilled" && Array.isArray(result.value)) {
+                        acc = acc.concat(result.value);
+                    }
+                    return acc;
+                }, []);
+
+                setLeavesWating(combinedData);
+            } catch (error) {
                 console.error("Error fetching leave requests:", error);
                 setLeavesWating([]);
-            });
-    }, [userID]);
+            }
+        };
 
-
-    useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByGeneral_ManagerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => console.log(data))
-    }, []);
-
-    useEffect(() => {
-        fetch(`${BASE_API_URL}/api/NormalLeave/WaitingByDirect_ManagerID/${userID}`)
-            .then((res) => res.json())
-            .then((data) => console.log(data))
-    }, []);
+        fetchLeaves();
+    }, [userID, token]);
 
 
     return (
@@ -46,7 +68,7 @@ function LeaveRecord() {
                                 <th scope="col" style={{ backgroundColor: '#F5F9FF' }}>الاسم</th>
                                 <th scope="col" style={{ backgroundColor: '#F5F9FF' }}>القسم</th>
                                 <th scope="col" style={{ backgroundColor: '#F5F9FF' }}>رقم الهاتف</th>
-                                <th scope="col" style={{ backgroundColor: '#F5F9FF' }}>نوع الإجازة</th>
+                                <th scope="col" style={{ backgroundColor: '#F5F9FF' }}>نوع الاجازة</th>
                                 <th scope="col" style={{ backgroundColor: '#F5F9FF' }}>تاريخ البداية</th>
                                 <th scope="col" style={{ backgroundColor: '#F5F9FF' }}>تاريخ النهاية</th>
                                 <th scope="col" style={{ backgroundColor: '#F5F9FF' }}>عدد الأيام</th>
@@ -76,7 +98,7 @@ function LeaveRecord() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="10" className="text-center text-danger p-3">لا يوجد طلبات إجازات</td>
+                                    <td colSpan="10" className="text-center text-danger p-3">لا يوجد طلبات اجازات</td>
                                 </tr>
                             )}
                         </tbody>

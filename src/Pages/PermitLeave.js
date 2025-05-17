@@ -5,7 +5,7 @@ import BtnLink from '../components/BtnLink';
 import Btn from '../components/Btn';
 import Modal from 'react-modal';
 import API from "../Data";
-import { BASE_API_URL } from '../server/serves';
+import { BASE_API_URL, token } from '../server/serves';
 
 // تحديد مكان عرض النافذة المنبثقة
 Modal.setAppElement('#root');  // تأكد من أنك حددت هذا العنصر
@@ -20,13 +20,20 @@ function PermitLeave() {
     useEffect(() => {
         const fetchPermitLeave = async () => {
             try {
-                const res = await fetch(`${BASE_API_URL}/api/PermitLeave/GetPermitLeaveById/${permitID}`);
+                const res = await fetch(`${BASE_API_URL}/api/PermitLeave/GetPermitLeaveById/${permitID}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                });
                 const data = await res.json();
                 setPermitLeave(data);
             } catch (err) {
                 console.error("Error fetching leave data:", err);
             }
-        };
+            };
+
 
         fetchPermitLeave();
     }, [permitID]);
@@ -37,7 +44,13 @@ function PermitLeave() {
 
             try {
                 const [userRes, imageRes] = await Promise.all([
-                    fetch(`${BASE_API_URL}/api/Account/GetUserById/${permitLeave.userId}`),
+                    fetch(`${BASE_API_URL}/api/Account/GetUserById/${permitLeave.userId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }),
                     fetch(`${BASE_API_URL}/api/PermitLeave/GetPermitLeaveImageByLeaveId/${permitID}`)
                 ]);
 
@@ -61,7 +74,7 @@ function PermitLeave() {
         <div>
             <div className="d-flex mb-4 justify-content-between">
                 <div className="zzz d-inline-block p-3 ps-5">
-                    <h2 className="m-0">{`التصريح رقم #${permitID}`}</h2>
+                    <h2 className="m-0">{`التصريح رقم ${permitID}#`}</h2>
                 </div>
                 <div className="p-3">
                     <BtnLink name='سجل التصاريح' link='/des-requests/permit' class="btn btn-primary m-0 ms-2 mb-2"/>
@@ -95,13 +108,13 @@ function PermitLeave() {
                                 <tr>
                                     <th scope="col">التاريخ</th>
                                     <th scope="col" className="text-start">
-                                        {permitLeave ? new Date(permitLeave.date).toLocaleDateString() : "جاري التحميل..."}
+                                    {permitLeave ? new Date(permitLeave.date).toLocaleDateString("ar-EG") : "جاري التحميل..."}
                                     </th>
                                 </tr>
                                 <tr>
                                     <th scope="col">عدد ساعات التصريح</th>
                                     <th scope="col" className="text-start">
-                                        {permitLeave ? permitLeave.hours : "جاري التحميل..."}
+                                    {permitLeave ? permitLeave.hours.toString().replace(/[0-9]/g, (digit) => '٠١٢٣٤٥٦٧٨٩'[digit]) : "جاري التحميل..."}
                                     </th>
                                 </tr>
                                 <tr>

@@ -2,9 +2,9 @@
 .SideBar {
     background-color: #fefeff;
     border-left: 2px solid #eee;
-    height: 100vh;
     margin: 0;
     padding: 0;
+    text-decoration:none ;
 }
 
 

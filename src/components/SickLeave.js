@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Swal from "sweetalert2";
-import API from "../Data" ;
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function SickLeave() {
     const userID = localStorage.getItem("userID");
@@ -14,11 +13,25 @@ function SickLeave() {
         e.preventDefault();
     
         if (!disease || !street || !governorate || !state || !userID) {
-            Swal.fire("خطأ!", "يرجى ملء جميع الحقول المطلوبة", "error");
+            Swal.fire({
+                title: "خطأ!",
+                text: "يرجى ملء جميع الحقول المطلوبة!",
+                icon: "error",
+                customClass: {
+                    title: 'text-red',
+                    confirmButton: 'blue-button',
+                    cancelButton: 'red-button',
+                    
+                },
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
+
             return;
         }
-    
-        // إضافة نافذة تأكيد قبل إرسال البيانات
+
         const result = await Swal.fire({
             title: 'هل أنت متأكد من إرسال الطلب؟',
             text: "لا يمكن التراجع عن هذا الإجراء!",
@@ -26,10 +39,20 @@ function SickLeave() {
             showCancelButton: true,
             confirmButtonText: 'نعم، إرسال',
             cancelButtonText: 'إلغاء',
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+            }
         });
+
     
         if (!result.isConfirmed) {
-            return; // إذا ضغط المستخدم "إلغاء"، يتم التوقف عن الإرسال
+            return;
         }
     
         const leaveData = {
@@ -46,6 +69,7 @@ function SickLeave() {
                 {
                     method: "POST",
                     headers: {
+                        Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                         "Accept": "application/json",
                     },
@@ -56,19 +80,60 @@ function SickLeave() {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("API Error:", errorData);
-                Swal.fire("خطأ!", `فشل إرسال الطلب: ${errorData.message || "يرجى المحاولة لاحقًا"}`, "error");
+                Swal.fire({
+                    title: "فشل إرسال الطلب!",
+                    text: `${errorData.message || "يرجى المحاولة لاحقًا"}`,
+                    icon: "error",
+                    confirmButtonText: "حسنًا",
+                    customClass: {
+                        title: 'text-red',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
+                });
                 return;
             } else {
                 const successData = await response.json();
-                Swal.fire("نجحت!", `تم إرسال الطلب: ${successData.message || "يرجى انتظار الموافقة"}`, "success");
-                
+                Swal.fire({
+                    title: "نجحت!",
+                    text: `تم إرسال الطلب: ${successData.message || "يرجى انتظار الموافقة"}`,
+                    icon: "success",
+                    confirmButtonText: "حسنًا",
+                    customClass: {
+                        title: 'text-blue',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
+                }).then(() => {
+                    window.location.reload(); // تحديث الصفحة بعد نجاح الطلب
+                });
             }
         } catch (error) {
-            Swal.fire("خطأ!", "حدث خطأ أثناء إرسال الطلب", "error");
-            console.error("Error:", error);
+            Swal.fire({
+                title: "فشل إرسال الطلب",
+                text: `${error || "يرجى المحاولة لاحقًا"}`,
+                icon: "error",
+                confirmButtonText: "حسنًا",
+                customClass: {
+                    title: 'text-red',
+                    confirmButton: 'blue-button',
+                    cancelButton: 'red-button'
+                },
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
         }
     };
-    
 
     return (
         <div>

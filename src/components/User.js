@@ -15,7 +15,7 @@ function Search(){
             </Link>
 
             <div>
-                <h6 className='m-0'>{userData.firstName} {userData.secondName}</h6>
+                <b className='m-0'>{userData.firstName} {userData.secondName}</b>
                 <p className='m-0'>{userData.roleName}</p>
             </div>
             <Link to={`/profile`} className='rounded-circle4'>

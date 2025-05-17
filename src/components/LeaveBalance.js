@@ -1,23 +1,36 @@
 import { useEffect, useState } from "react";
 import '../CSS/LeaveBalance.css';
-import { BASE_API_URL, useUserData } from "../server/serves";
+import { BASE_API_URL, token, useUserData } from "../server/serves";
+
+const toArabicNumbers = (num) => {
+    if (num === undefined || num === null) return "--";
+    return num.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+};
 
 function LeaveBalance(){
     const [leaveTypes, setLeaveTypes] = useState([]);
     const userData = useUserData();
 
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/NormalLeave/GetLeaveTypes`)
-        .then((res) => res.json())
-        .then((data) => setLeaveTypes(data))
-    }, [])
+    useEffect(() => {
+    fetch(`${BASE_API_URL}/api/NormalLeave/GetLeaveTypes`, {
+        method: "GET",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        },
+    })
+    .then((res) => res.json())
+    .then((data) => setLeaveTypes(data))
+    .catch((err) => console.error("Error fetching leave types:", err)); // معالجة الأخطاء
+}, []);
+
 
     return(
         <>
             {userData.roleName !== "عميد الكلية" ?
                 <div>
                 <div className="mt-4">
-                    <h4>اجازاتي</h4>
+                    <h4 className="text-bold">اجازاتي</h4>
                 </div>
                 <div className="d-flex gap-3 row mt-3">
 
@@ -35,14 +48,10 @@ function LeaveBalance(){
                                         </div> */}
 
                                         <div>
-                                            {userData.leaveSection === 0 ? <h3>باقي {userData.normalLeavesCount}</h3>
-                                            : userData.leaveSection === 1 ? <h3>باقي {userData.normalLeavesCount}</h3>
-                                            : userData.leaveSection === 2 ? <h3>باقي {userData.normalLeavesCount}</h3>
-                                            : userData.leaveSection === 3 ? <h3>باقي {userData.normalLeavesCount}</h3>
-                                            : <h3>باقي {userData.normalLeavesCount}</h3>}
+                                            <h4 className="text-bold">{leaveType}</h4>
                                         </div>
                                         <div>
-                                            <h5>{leaveType}</h5>
+                                            <h5>باقِ ({toArabicNumbers(userData.normalLeavesCount)})</h5>
                                         </div>
                                     </div>
                                 :leaveType === "عارضة" ?
@@ -54,12 +63,10 @@ function LeaveBalance(){
                                         </div> */}
 
                                         <div>
-                                            {userData.leaveSection === 0 ? <h3>باقي {userData.casualLeavesCount}</h3>
-                                            : userData.leaveSection === 1 ? <h3>باقي {userData.casualLeavesCount}</h3>
-                                            : <h3>باقي {userData.casualLeavesCount}</h3>}
+                                            <h4 className="text-bold">{leaveType}</h4>
                                         </div>
                                         <div>
-                                            <h5>{leaveType}</h5>
+                                            <h5>باقِ ({toArabicNumbers(userData.casualLeavesCount)})</h5>
                                         </div>
                                     </div>
                                 :leaveType === "مرضية" ?
@@ -68,10 +75,10 @@ function LeaveBalance(){
                                             <h3>{user.nonChronicSickLeavesCount}</h3>
                                         </div> */}
                                         <div>
-                                            <h3>مأخوذ {userData.nonChronicSickLeavesCount}</h3>
+                                            <h4 className="text-bold">{leaveType}</h4>
                                         </div>
                                         <div>
-                                            <h5>{leaveType}</h5>
+                                            <h5>معتمد ({toArabicNumbers(userData.nonChronicSickLeavesCount)})</h5>
                                         </div>
                                     </div>
                                 :null
@@ -84,7 +91,6 @@ function LeaveBalance(){
                 : null
             }
         </>
-
     )
 }
 

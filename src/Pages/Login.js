@@ -11,15 +11,20 @@ function Login() {
                     <div className='container-1'>
                         {/* Removed <form> from here since LoginCom has its own form */}
                         <div className="d-flex headForm text-primary">
-                            <h4>اجازاتي</h4>
+                            <Link className='text-decoration-none' to={"/team"}><h4 className='text-bold'>اجازاتي</h4></Link>
                             <p></p>
-                            <h6>جامعة جنوب الوادي</h6>
+                            <h6 className='text-bold'>جامعة قنا</h6>
                             <img src={LogoUniversity} alt="LogoUniversity" />
                         </div>
                         <Outlet /> {/* LoginCom will render here with its own form */}
-                        <div className="wordBottom">
+                        {/* <div className="wordBottom">
                             <Link to={'/about'} id="emailHelp" className="form-text text-color">سياسة الخصوصية. </Link>
                             <Link to={'/inquiries'} id="emailHelp" className="form-text text-color">الدليل الشامل للأسئلة الشائعة</Link>
+                        </div> */}
+
+                        <div className="wordBottom">
+                            <span id="emailHelp" className="form-text">تم بواسطة. </span>
+                            <Link to={'/team'} id="emailHelp" className="form-text text-color text-primary">طلاب من الدفعة الثانية حاسبات قنا</Link>
                         </div>
                     </div>
                 </div>

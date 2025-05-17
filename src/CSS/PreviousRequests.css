@@ -4,3 +4,18 @@
     padding: 12px;
     background: #fff;
 }
+.custom-select-fix {
+    background-color: transparent !important;
+    padding-left: 10px;
+    cursor: pointer;
+  }
+  
+  .custom-select-fix:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  
+  .custom-select-fix option {
+    color: black;
+    background-color: white;
+  }

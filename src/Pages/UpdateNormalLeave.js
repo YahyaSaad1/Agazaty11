@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function UpdateNormalLeave() {
     const userID = localStorage.getItem("userID");
     const [user, setUser] = useState([]);
 
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/NormalLeave/GetAllwaitingNormalLeaves`)
-        .then((res)=> res.json())
-        .then((data)=> setUser(data))
-    }, [userID])
+    useEffect(() => {
+    fetch(`${BASE_API_URL}/api/NormalLeave/GetAllwaitingNormalLeaves`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        }
+    })
+    .then((res) => res.json())
+    .then((data) => setUser(data))
+    .catch((error) => console.error('Error fetching data:', error));
+}, [userID]);
 
     const leaveID = useParams().leaveID;
     const [endDate, setEndDate] = useState("");
@@ -38,6 +45,7 @@ function UpdateNormalLeave() {
                     headers: {
                         "Content-Type": "application/json",
                         "Accept": "application/json",
+                        'Authorization': `Bearer ${token}`,
                     },
                     body: JSON.stringify(leaveData),
                 }
@@ -69,7 +77,7 @@ function UpdateNormalLeave() {
                 <div className="row">
                     <div className="col-sm-12 col-md-6 mt-3">
                         <label htmlFor="endDate" className="form-label">
-                            تاريخ نهاية الإجازة
+                            تاريخ نهاية الاجازة
                         </label>
                         <input
                             type="date"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token, validate } from "../server/serves";
 
 function Permit() {
     const [Hours, setHours] = useState("");
@@ -11,7 +11,13 @@ function Permit() {
     const [users, setUsers] = useState([]);
 
     useEffect(() => {
-        fetch(`${BASE_API_URL}/api/Account/GetAllActiveUsers`)
+        fetch(`${BASE_API_URL}/api/Account/GetAllActiveUsers`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
             .then((res) => res.json())
             .then((data) => setUsers(data));
     }, []);
@@ -43,11 +49,21 @@ function Permit() {
         // نافذة التأكيد قبل إرسال الطلب
         const result = await Swal.fire({
             title: "هل أنت متأكد؟",
-            text: "هل ترغب في إرسال طلب التصريح الآن؟",
+            // text: "هل ترغب في إرسال طلب التصريح الآن؟",
+            text: "لا يمكن التراجع عن هذا الإجراء!",
             icon: "question",
             showCancelButton: true,
             confirmButtonText: "نعم، إرسال الطلب",
             cancelButtonText: "لا، تعديل البيانات",
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+            }
         });
 
         if (result.isConfirmed) {
@@ -63,21 +79,65 @@ function Permit() {
                     `${BASE_API_URL}/api/PermitLeave/CreatePermitLeave`,
                     {
                         method: "POST",
+                        headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                        },
                         body: formData,
                     }
                 );
 
+
                 const responseData = await response.json();
 
                 if (!response.ok) {
-                    Swal.fire("خطأ!", `فشل إرسال الطلب: ${responseData.message || "يرجى المحاولة لاحقًا"}`, "error");
-                } else {
-                    Swal.fire("نجحت!", `تم إرسال الطلب: ${responseData.message || "يرجى انتظار الموافقة"}`, "success");
+                    Swal.fire({
+                        title: "!فشل إرسال الطلب",
+                        text: `${responseData.message || "يرجى المحاولة لاحقًا"}`,
+                        icon: "error",
+                        customClass: {
+                            title: 'text-red',
+                            confirmButton: 'blue-button',
+                            cancelButton: 'red-button'
+                        },
+                        didOpen: () => {
+                            const popup = document.querySelector('.swal2-popup');
+                            if (popup) popup.setAttribute('dir', 'rtl');
+                        }
+                    });
+                        } else {
+                            Swal.fire({
+                                title: "نجحت!",
+                                text: `تم إرسال الطلب: ${responseData.message || "يرجى انتظار الموافقة"}`,
+                                icon: "success",
+                                customClass: {
+                                    title: 'text-blue',
+                                    confirmButton: 'blue-button',
+                                    cancelButton: 'red-button'
+                                },
+                                didOpen: () => {
+                                    const popup = document.querySelector('.swal2-popup');
+                                    if (popup) popup.setAttribute('dir', 'rtl');
+                                }
+                            });
                     window.location.reload();
                 }
             } catch (error) {
-                Swal.fire("خطأ!", "حدث خطأ أثناء إرسال الطلب", "error");
-                console.error("Error:", error);
+                Swal.fire({
+                    title: "خطأ!",
+                    text: "حدث خطأ أثناء إرسال الطلب",
+                    icon: "error",
+                    customClass: {
+                        title: 'text-red',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
+                });
+            console.error("Error:", error);
             }
         }
     };
@@ -100,6 +160,8 @@ function Permit() {
                             className="form-control"
                             id="Hours"
                             required
+                            max={3}
+                            onInput={() => validate("Hours", "عدد الساعات يجب أن يكون أقل من أو يساوي ثلاث ساعات", 3)}
                         />
                     </div>
 

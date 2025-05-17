@@ -12,7 +12,7 @@ function EmergencyLeave(){
             title:`<span style='color:#0d6efd;'>هل أنت متأكد من إرسال الاجازة ؟</span>`,
             html: `
                 <p dir='rtl'><span style='font-weight: bold;'>نوع الاجازة:</span> <span style='color:#0d6efd;'>عارضة</span></p>
-                <p dir='rtl'><span style='font-weight: bold;'>تاريخ بداية الإجازة:</span> <span style='color:#0d6efd;'>${startDate}</span></p>
+                <p dir='rtl'><span style='font-weight: bold;'>تاريخ بداية الاجازة:</span> <span style='color:#0d6efd;'>${startDate}</span></p>
                 <p dir='rtl'><span style='font-weight: bold;'>عدد أيام الاجازة:</span> <span style='color:#0d6efd;'>${numberOfDays}</span></p>
                 <p dir='rtl'><span style='font-weight: bold;'>ملحوظاتك:</span> <span style='color:#0d6efd;'>${notes}</span></p>
             `,

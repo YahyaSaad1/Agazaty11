@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function CasualLeave() {
     const userID = localStorage.getItem("userID");
@@ -11,7 +11,6 @@ function CasualLeave() {
     const [maxStartDate, setMaxStartDate] = useState("");
 
     useEffect(() => {
-        // عند تحميل الصفحة نحدد أن أقصى تاريخ لبداية الإجازة هو تاريخ اليوم
         const today = new Date();
         setMaxStartDate(today.toISOString().split("T")[0]);
     }, []);
@@ -20,7 +19,7 @@ function CasualLeave() {
         if (startDate) {
             const start = new Date(startDate);
             const maxEnd = new Date(start);
-            maxEnd.setDate(start.getDate() + 1); // نضيف يوم واحد فقط على البداية
+            maxEnd.setDate(start.getDate() + 1);
 
             const today = new Date();
             const finalMax = maxEnd > today ? today : maxEnd;
@@ -35,24 +34,61 @@ function CasualLeave() {
         e.preventDefault();
 
         if (!startDate || !endDate || !userID) {
-            Swal.fire("خطأ!", "يرجى ملء جميع الحقول المطلوبة", "error");
+            Swal.fire({
+                title: "خطأ!",
+                text: "يرجى ملء جميع الحقول المطلوبة",
+                icon: "error",
+                confirmButtonText: "حسنًا",
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
             return;
         }
-
+        
         if (new Date(startDate) > new Date()) {
-            Swal.fire("خطأ!", "لا يمكن اختيار تاريخ بداية في المستقبل", "error");
+            Swal.fire({
+                title: "خطأ!",
+                text: "لا يمكن اختيار تاريخ بداية في المستقبل",
+                icon: "error",
+                confirmButtonText: "حسنًا",
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
             return;
         }
-
+        
         if (new Date(endDate) > new Date()) {
-            Swal.fire("خطأ!", "لا يمكن اختيار تاريخ نهاية في المستقبل", "error");
+            Swal.fire({
+                title: "خطأ!",
+                text: "لا يمكن اختيار تاريخ نهاية في المستقبل",
+                icon: "error",
+                confirmButtonText: "حسنًا",
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
+            return;
+        }
+        
+        if (new Date(endDate) < new Date(startDate)) {
+            Swal.fire({
+                title: "خطأ!",
+                text: "تاريخ النهاية لا يمكن أن يكون قبل تاريخ البداية",
+                icon: "error",
+                confirmButtonText: "حسنًا",
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
             return;
         }
 
-        if (new Date(endDate) < new Date(startDate)) {
-            Swal.fire("خطأ!", "تاريخ النهاية لا يمكن أن يكون قبل تاريخ البداية", "error");
-            return;
-        }
 
         const result = await Swal.fire({
             title: 'هل أنت متأكد من إرسال الطلب؟',
@@ -61,6 +97,15 @@ function CasualLeave() {
             showCancelButton: true,
             confirmButtonText: 'نعم، إرسال',
             cancelButtonText: 'إلغاء',
+            customClass: {
+                title: 'text-blue',
+                confirmButton: 'blue-button',
+                cancelButton: 'red-button'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                if (popup) popup.setAttribute('dir', 'rtl');
+            }
         });
 
         if (!result.isConfirmed) {
@@ -80,6 +125,7 @@ function CasualLeave() {
                 {
                     method: "POST",
                     headers: {
+                        Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                         "Accept": "application/json",
                     },
@@ -90,29 +136,64 @@ function CasualLeave() {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("API Error:", errorData);
-                Swal.fire("خطأ!", `فشل إرسال الطلب: ${errorData.message || "يرجى المحاولة لاحقًا"}`, "error");
+            
+                Swal.fire({
+                    title: "فشل إرسال الطلب!",
+                    text: `${errorData.message || "يرجى المحاولة لاحقًا"}`,
+                    icon: "error",
+                    confirmButtonText: "حسنًا",
+                    customClass: {
+                        title: 'text-red',
+                        confirmButton: 'blue-button',
+                        cancelButton: 'red-button'
+                    },
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
+                });
                 return;
             } else {
                 const successData = await response.json();
-                Swal.fire("نجاح!", `تم إرسال الطلب: ${successData.message || "يرجى انتظار الموافقة"}`, "success");
-            }
-        } catch (error) {
-            Swal.fire("خطأ!", "حدث خطأ أثناء إرسال الطلب", "error");
+            
+                Swal.fire({
+                    title: "نجاح!",
+                    text: `تم إرسال الطلب: ${successData.message || "يرجى انتظار الموافقة"}`,
+                    icon: "success",
+                    confirmButtonText: "حسنًا",
+                    didOpen: () => {
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.setAttribute('dir', 'rtl');
+                    }
+                });
+            }} catch (error) {
             console.error("Error:", error);
+        
+            Swal.fire({
+                title: "خطأ!",
+                text: "حدث خطأ أثناء إرسال الطلب",
+                icon: "error",
+                confirmButtonText: "حسنًا",
+                didOpen: () => {
+                    const popup = document.querySelector('.swal2-popup');
+                    if (popup) popup.setAttribute('dir', 'rtl');
+                }
+            });
         }
+        
     };
 
     return (
         <div>
             <div className="zzz d-inline-block p-3 ps-5">
-                <h2 className="m-0">طلب إجازة عارضة</h2>
+                <h2 className="m-0">طلب اجازة عارضة</h2>
             </div>
 
             <form onSubmit={handleData}>
                 <div className="row">
                     <div className="col-sm-12 col-md-6 mt-3">
                         <label htmlFor="startDate" className="form-label">
-                            تاريخ بداية الإجازة
+                            تاريخ بداية الاجازة
                         </label>
                         <input
                             type="date"
@@ -130,7 +211,7 @@ function CasualLeave() {
 
                     <div className="col-sm-12 col-md-6 mt-3">
                         <label htmlFor="endDate" className="form-label">
-                            تاريخ نهاية الإجازة
+                            تاريخ نهاية الاجازة
                         </label>
                         <input
                             type="date"

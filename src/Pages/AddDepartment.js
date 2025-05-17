@@ -1,53 +1,84 @@
 import { useEffect, useState } from "react";
 import Btn from "../components/Btn";
 import Swal from "sweetalert2";
-import API from "../Data" ;
-import { BASE_API_URL } from "../server/serves";
+import { BASE_API_URL, token } from "../server/serves";
 
 function AddDepartment(){
     const [name, SetName] = useState('');
     const [code, SetCode] = useState('');
     const [createDate, SetCreateDate] = useState('');
     const [managerId, setManagerId] = useState('');
-    const [managerName, setManagerName] = useState('');
+    const [departmentType, setDepartmentType] = useState('');
+    const [managerName, setManagerName] = useState([]);
     const [users, setUsers] = useState([]);
 
-    useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/Account/GetUserById/${managerId}`)
-        .then((res)=> res.json())
-        .then((data)=> setManagerName(data.fullName))
-    }, [managerId])
+    fetch(`${BASE_API_URL}/api/Account/GetUserById/${managerId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then((res) => {
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.text();
+    })
+    .then((text) => {
+        if (text) {
+            const data = JSON.parse(text);
+            setManagerName(data.fullName);
+        } else {
+            setManagerName("غير معروف");
+        }
+    })
+    .catch((error) => {
+        console.error("Error fetching manager name:", error);
+        setManagerName("غير معروف");
+    });
+    
 
     useEffect(()=>{
-        fetch(`${BASE_API_URL}/api/Account/GetAllActiveUsers`)
+        fetch(`${BASE_API_URL}/api/Account/GetAllActiveUsers`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
         .then((res)=> res.json())
         .then((data)=> setUsers(data))
     }, [])
 
     const handleData = (e) => {
         e.preventDefault();
-        const newDepartment = { name, managerId, code, createDate };
+        const newDepartment = { name, managerId, code, createDate, departmentType };
     
         fetch(`${BASE_API_URL}/api/Department/CreateDepartment`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(newDepartment),
         })
         .then((res) => res.json())
         .then((data) => {
             Swal.fire({
-                title: `<span style='color:#0d6efd;'>تمت إضافة القسم بنجاح.</span>`,
-                icon: "success",
-                confirmButtonText: "مشاهدة الأقسام",
-                confirmButtonColor: "#0d6efd",
+                title: `<span style='color:${data.success ? "#0d6efd" : "red"};'><p>!خطأ<p/><p style='font-size:18px;'>${data.message}<p/>
+                </span>`,
+                icon: data.success ? "success" : "error",
+                confirmButtonText: data.success ? "مشاهدة الأقسام" : "حسناً",
+                confirmButtonColor: data.success ? "#0d6efd" : "#d33",
             }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = "http://localhost:3000/departments";
+                if (data.success && result.isConfirmed) {
+                    window.location.href = "/departments";
                 }
             });
         })
+        
+        
         .catch((error) => {
             Swal.fire({
                 title: `<span style='color:red;'>خطأ في الإضافة</span>`,
@@ -68,6 +99,7 @@ function AddDepartment(){
                 <p dir='rtl'><span style='font-weight: bold;'>تاريخ إنشاء القسم:</span> <span style='color:#0d6efd;'>${createDate}</span></p>
                 <p dir='rtl'><span style='font-weight: bold;'>رئيس القسم:</span> <span style='color:#0d6efd;'>${managerName}</span></p>
                 <p dir='rtl'><span style='font-weight: bold;'>كود القسم:</span> <span style='color:#0d6efd;'>${code}</span></p>
+                <p dir='rtl'><span style='font-weight: bold;'>مكان القسم:</span> <span style='color:#0d6efd;'>${departmentType}</span></p>
             `,
             icon: "warning",
             showCancelButton: true,
@@ -77,7 +109,7 @@ function AddDepartment(){
             cancelButtonColor: "#d33",
         }).then((result) => {
             if (result.isConfirmed) {
-                handleData(e); // تنفيذ العملية بعد التأكيد
+                handleData(e);
             }
         });
     };
@@ -96,6 +128,18 @@ function AddDepartment(){
                         <label htmlFor="exampleFormControlText1" className="form-label">اسم القسم</label>
                         <input className="form-control" type="text" onChange={(e)=> SetName(e.target.value)} placeholder="علوم الحاسب" id="exampleFormControlText1" aria-label="default input example" />
                     </div>
+
+                    <div className="col-sm-12 col-md-6 mt-3">
+                        <label htmlFor="departmentType" className="form-label">مكان القسم</label>
+                        <select className="form-select" id="departmentType" onChange={(e) => setDepartmentType(e.target.value === "true")} required >
+                            <option value="">أختر مكان القسم</option>
+                            <option value="true">هيئة تدريس</option>
+                            <option value="false">موظفين</option>
+                        </select>
+                    </div>
+
+
+
 
                     <div className="col-sm-12 col-md-6 mt-3">
                         <label htmlFor="manager" className="form-label">رئيس القسم</label>
